@@ -19,6 +19,6 @@
 ### 更新订阅
 `/data/clash/scripts/clash.tool -s`
 ## Links
-[Mihomo](https://github.com/MetaCubeX/mihomo)
-[Magisk](https://github.com/topjohnwu/Magisk)
+[Mihomo](https://github.com/MetaCubeX/mihomo)  
+[Magisk](https://github.com/topjohnwu/Magisk)  
 [CFM](https://github.com/taamarin/ClashforMagisk)
