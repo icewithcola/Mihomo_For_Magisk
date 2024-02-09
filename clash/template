@@ -1,0 +1,48 @@
+tproxy-port: 7893
+allow-lan: true
+geodata-mode: true
+unified-delay: true
+mode: rule
+log-level: info
+ipv6: true
+tcp-concurrent: false
+sniffer:
+  enable: false
+profile:
+  store-fake-ip: true
+external-controller: 127.0.0.1:9090
+external-ui: clash-dashboard/dist
+
+tun:
+  enable: false
+  device: Meta
+  stack: system # gvisor
+  dns-hijack:
+    - any:53
+  auto-route: true
+  auto-detect-interface: true
+# 技术原因，enable必须在tun:的下一行
+
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+  ipv6: true
+  default-nameserver:
+    - tls://1.1.1.1
+    - tls://8.8.8.8
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - localhost.ptlogin2.qq.com
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    # geosite: ["!CN"]
+  nameserver:
+    - tls://223.5.5.5
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  fallback:
+    - https://doh.opendns.com/dns-query
+    - https://dns.adguard.com/dns-query
+    - https://dns.google/dns-query
