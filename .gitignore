@@ -1,2 +1,5 @@
 release/*
 binary/*
+clash/Country.mmdb
+clash/GeoIP.dat
+clash/GeoSite.dat
