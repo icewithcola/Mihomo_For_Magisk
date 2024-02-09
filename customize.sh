@@ -11,8 +11,17 @@ mod_config="${clash_data_dir}/clash.config"
 geoip_file_path="${clash_data_dir}/Country.mmdb"
 
 # 检测架构
-if [ "${ARCH}" -ne "arm64" ]; then
-    abort "仅支持arm64架构."
+if [ -z ${ARCH}]; then
+    abort "未知的架构"
+fi
+if [ "${ARCH}" -eq "arm" ]; then
+    abort "不支持的架构"
+fi
+if [ "${ARCH}" -eq "x86" ]; then
+    abort "不支持的架构"
+fi
+if [ "${ARCH}" -eq "x64" ]; then
+    ui_print "检测到x64架构，实际不可用！！！"
 fi
 
 # 检测是否已经安装过不一样的模块
@@ -41,22 +50,21 @@ check_package(){
     done
 }
 
-if [ -z ${PACKCHECK} ]; then
-    check_package
-fi
-
 mkdir -p ${MODPATH}/system/bin
 mkdir -p ${clash_data_dir}
 mkdir -p ${MODPATH}${ca_path}
 
 unzip -o "${ZIPFILE}" -x 'META-INF/*' -d $MODPATH >&2
 
+if [ -z ${PACKCHECK} ]; then
+    check_package
+fi
 
 
 
 mkdir ${clash_data_dir}
 
-mv ${MODPATH}/binary ${MODPATH}/system/bin
+mv ${MODPATH}/binary/* ${MODPATH}/system/bin
 mv ${MODPATH}/cacert.pem ${MODPATH}${ca_path}
 mv -n ${MODPATH}/clash-dashboard ${clash_data_dir}/
 rm -rf ${MODPATH}/clash-dashboard

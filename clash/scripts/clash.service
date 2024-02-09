@@ -15,7 +15,22 @@ get_uid(){
     echo $uid_proxy > $2
 }
 
+clean_last(){
+    if [ -d ${Clash_run_path} ] ; then
+        mv -f ${Clash_run_path} ${Clash_run_path}.old
+    fi
+    mkdir -p ${Clash_run_path}
+    chown ${Clash_user_group} ${Clash_run_path}
+    chmod 0755 ${Clash_run_path}
+
+    touch $CFM_logs_file
+    touch $appuid_file
+    touch $Clash_pid_file
+
+}
+
 start_clash() {
+    clean_last
     if [ -n "$app_proxy" ] ; then
         get_uid "$app_proxy" "${Clash_data_dir}/rule_providers/${proxy_file}"
     fi
@@ -24,19 +39,24 @@ start_clash() {
     fi
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            echo ${net} | grep -q wlan
-            if [ $? -eq 0 ] ; then
-                echo 0 > ${net}/accept_ra
+            # AVD中可能不存在data
+            if [ -d ${net} ] ; then
+                echo ${net} | grep -q wlan
+                if [ $? -eq 0 ] ; then
+                    echo 0 > ${net}/accept_ra
+                fi
+                echo 1 > ${net}/disable_ipv6
             fi
-            echo 1 > ${net}/disable_ipv6
         done
     else
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            echo ${net} | grep -q wlan
-            if [ $? -eq 0 ] ; then
-                echo 1 > ${net}/accept_ra
+            if [ -d ${net} ] ; then
+                echo ${net} | grep -q wlan
+                if [ $? -eq 0 ] ; then
+                    echo 1 > ${net}/accept_ra
+                fi
+                echo 0 > ${net}/disable_ipv6
             fi
-            echo 0 > ${net}/disable_ipv6
         done
     fi
     echo "" > ${CFM_logs_file}
