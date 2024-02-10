@@ -127,7 +127,7 @@ start_clash() {
         else
             echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: Clash启动失败 配置错误 错误信息" >> ${CFM_logs_file}
             $(${Clash_bin_path} -d ${Clash_data_dir} -f ${Clash_config_file} -t  | grep error| awk -F 'msg=' '{print $2}'>> ${CFM_logs_file})
-            kill -15 `cat ${Clash_pid_file}`
+            kill_clash
             exit 1
         fi
     else
@@ -142,7 +142,7 @@ start_clash() {
     fi
     sleep 5
     if ! (${scripts_dir}/clash.tool -p) ; then
-        kill -15 `cat ${Clash_pid_file}`
+        kill_clash
         rm -rf ${Clash_pid_file}
         echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"err: 端口未检测到,已停止clash内核以及后续逻辑." >> ${CFM_logs_file}
         exit 1
@@ -150,9 +150,17 @@ start_clash() {
 }
 
 stop_clash() {
-    kill -15 `cat ${Clash_pid_file}`
+    kill_clash
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" >> ${CFM_logs_file}
 }
+
+kill_clash() {
+    pids=`pgrep -f clash`
+    for pid in $pids ; do
+        kill -s SIGTERM $pid
+    done
+}
+
 
 while getopts ":sk" signal ; do
     case ${signal} in

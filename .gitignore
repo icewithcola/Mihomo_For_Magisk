@@ -4,3 +4,6 @@ clash/Country.mmdb
 clash/GeoIP.dat
 clash/GeoSite.dat
 clash/config.yaml
+clash-dashboard/*
+clash/proxy_providers
+clash/rule_providers
