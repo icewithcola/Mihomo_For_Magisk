@@ -7,3 +7,4 @@ clash/config.yaml
 clash-dashboard/*
 clash/proxy_providers
 clash/rule_providers
+version

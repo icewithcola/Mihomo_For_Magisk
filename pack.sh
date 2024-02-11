@@ -11,11 +11,15 @@ download_binaries(){
         rm -rf ./binary
     fi
     mkdir ./binary
+    if [ -f ./version ]; then
+        rm ./version
+    fi
+    touch ./version
 
     # mihomo
     echo "正在下载mihomo..."
     mihomo_version=$(curl -sL "${Corefile_mihomo}version.txt")
-    echo "mihomo版本: ${mihomo_version}"
+    echo "mihomo版本:${mihomo_version}" >> ./version
     wget "${Corefile_mihomo}mihomo-android-arm64-${mihomo_version}.gz" -O mihomo.gz 
     gunzip mihomo.gz
     mv "mihomo" ./binary/clash
@@ -54,22 +58,19 @@ download_config(){
         wget "${Subcript_url}" -O ./clash/config.yaml 
     fi
 
-    providers=$(grep -A 2 "type: http" ./clash/config.yaml)
-    if [[ -n "$providers" ]]; then
-        IFS="--"
-        declare -a provider_list=( $providers )
-        for (( i=0 ; i < ${#provider_list[@]}; i++ )); do
-            provider=${provider_list[$i]}
-            if [[ -n "$provider" ]]; then
-                url=$(echo "$provider" | grep -o 'url: "[^"]*"' | cut -d'"' -f2)
-                path=$(echo "$provider" | grep -o 'path: [^ ]*' | cut -d' ' -f2-)
-                wget $url -O "./clash${path:1}"
-                echo "成功下载$path"
-            fi
-        done
-    else
-        echo "没有需要下载的providers"
+    # 需要安装python3
+    if ! [ -x "$(command -v python3)" ]; then
+        echo "请安装python3以自动下载Provider"
+        return
+    fi   
+    if [ -z "./clash/proxy_providers" ]; then
+        mkdir ./clash/proxy_providers
     fi
+    if [ -z "./clash/rule_providers" ]; then
+        mkdir ./clash/rule_providers
+    fi
+
+    python3 ./download_providers.py "$(dirname "$0")/clash"
 }
 
 download_dashboard(){
