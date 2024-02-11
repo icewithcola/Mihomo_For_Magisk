@@ -7,7 +7,7 @@
 ## 打包方式
 在linux下
 `$ ./pack.sh -a`
-（需要
+（需要gzip,wget等依赖）
 ## 自定义部分
 ### files.config
 存储打包时的变量，具体请看该文件中的注释  

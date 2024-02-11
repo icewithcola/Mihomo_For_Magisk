@@ -7,6 +7,11 @@ set -e
 
 # 下载文件
 download_binaries(){
+    if [ -d ./binary ]; then
+        rm -rf ./binary
+    fi
+    mkdir ./binary
+
     # mihomo
     echo "正在下载mihomo..."
     mihomo_version=$(curl -sL "${Corefile_mihomo}version.txt")
@@ -58,7 +63,7 @@ download_config(){
             if [[ -n "$provider" ]]; then
                 url=$(echo "$provider" | grep -o 'url: "[^"]*"' | cut -d'"' -f2)
                 path=$(echo "$provider" | grep -o 'path: [^ ]*' | cut -d' ' -f2-)
-                wget $url -O "./clash/$path"
+                wget $url -O "./clash${path:1}"
                 echo "成功下载$path"
             fi
         done
