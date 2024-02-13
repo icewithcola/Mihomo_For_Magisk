@@ -1,6 +1,6 @@
 id=Mihomo_For_Magisk
 name=Mihomo For Magisk
-version=1.0.2
-versionCode=20240211
+version=1.0.3
+versionCode=20240213
 author=kagura
 description=Mihomo Magisk模块，支持自助更新二进制，自助重打包，预下载资源

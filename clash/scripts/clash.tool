@@ -98,8 +98,8 @@ updateFile() {
     update_url="$2"
 
     mv -f ${file} ${file_bk}
-    echo "curl -L -A 'clash' ${update_url} -o ${file} "
-    curl -L -A 'clash' ${update_url} -o ${file} 2>&1 # >> /dev/null 2>&1
+    echo "curl --cacert /etc/security/cacerts/cacert.pem -L -A 'clash' ${update_url} -o ${file} "
+    curl --cacert /etc/security/cacerts/cacert.pem -L -A 'clash' ${update_url} -o ${file} 2>&1 # >> /dev/null 2>&1
 
     sleep 1
 
@@ -217,7 +217,7 @@ while getopts ":kfmpusl" signal; do
         update_pre
         ;;
     s)
-        UpdateSub
+        exec $(dirname $0)/updateSub.sh
         restart_clash
         ;;
     k)

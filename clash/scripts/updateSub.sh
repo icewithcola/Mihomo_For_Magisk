@@ -16,7 +16,7 @@ UpdateSub(){
         return 1
     fi
     # 下载
-    subItem=$(curl -sL ${Subcript_url})
+    subItem=$(curl --cacert /etc/security/cacerts/cacert.pem -sL  "${Subcript_url}")
     if [ -z "${subItem}" ]; then
         echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"error: 订阅链接无法获取到数据，请检查链接是否正确." >> ${CFM_logs_file}
         return 1

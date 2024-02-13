@@ -33,6 +33,9 @@ check_lastinstall(){
     # 检测是否已经安装过
     if [ -d "${clash_data_dir}" ]; then
         ui_print "检测到已安装过的Clash,将您的配置文件迁移到新的目录."
+        if [ -d "${clash_data_dir}.old" ]; then
+            rm -rf "${clash_data_dir}.old"
+        fi
         mv -f ${clash_data_dir} ${clash_data_dir}.old
     fi
 }
@@ -59,6 +62,16 @@ release_file(){
     fi
 }
 
+move_config(){
+    if [ ! -s "${clash_data_dir}/config.yaml" ] && [ -s "${clash_data_dir}.old/config.yaml" ]; then
+        echo "在旧的安装中找到可用的config.yaml等配置,将其迁移到新的目录."
+        cp -f ${clash_data_dir}.old/config.yaml ${clash_data_dir}/config.yaml
+        cp -f ${clash_data_dir}.old/clash.config ${clash_data_dir}/clash.config
+        cp -f ${clash_data_dir}.old/proxy_provisers/* ${clash_data_dir}/proxy_provisers/
+        cp -f ${clash_data_dir}.old/rule_provisers/* ${clash_data_dir}/rule_provisers/
+    fi
+}
+
 setup_perm(){
     ui_print "- 开始设置环境权限."
     set_perm_recursive ${MODPATH} 0 0 0755 0644
@@ -78,4 +91,5 @@ setup_perm(){
 check_env
 check_lastinstall
 release_file
+move_config
 setup_perm
