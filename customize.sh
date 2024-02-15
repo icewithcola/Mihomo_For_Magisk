@@ -9,11 +9,11 @@ modules_dir="/data/adb/modules"
 ca_path="/system/etc/security/cacerts"
 mod_config="${clash_data_dir}/clash.config"
 geoip_file_path="${clash_data_dir}/Country.mmdb"
-
+target_arch="arm64"
 
 check_env(){
     # 检测架构
-    if [ "${ARCH}" -ne "arm64" ]; then
+    if [ "${ARCH}" -ne "${target_arch}" ]; then
         abort "不支持的架构"
     fi
 

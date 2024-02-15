@@ -18,9 +18,24 @@ download_binaries(){
 
     # mihomo
     echo "正在下载mihomo..."
-    mihomo_version=$(curl -sL "${Corefile_mihomo}version.txt")
+
+    if [ "$pack_arch" == "arm64" ]; then
+        arch=$mihomo_arch_arm64
+    else
+        if [ "$pack_arch" == "amd64" ]; then
+            arch=$mihomo_arch_amd64
+        else 
+            echo "不支持的打包架构: ${pack_arch}"
+            exit 1
+        fi
+    fi
+
+    if [ "$mihomo_tag" == "latest" ]; then
+        mihomo_tag=$(curl -sL "${mihomo_link}/latest/download/version.txt")
+    fi
+    mihomo_version=$(curl -sL "${mihomo_link}/download/${mihomo_tag}/version.txt")
     echo "mihomo版本:${mihomo_version}" >> ./version
-    wget "${Corefile_mihomo}mihomo-android-arm64-${mihomo_version}.gz" -O mihomo.gz 
+    wget -q "${mihomo_link}/download/${mihomo_tag}/mihomo-${arch}-${mihomo_version}.gz" -O mihomo.gz 
     gunzip mihomo.gz
     mv "mihomo" ./binary/clash
     chmod 0755 ./binary/clash
@@ -28,25 +43,33 @@ download_binaries(){
 
     # curl
     echo "正在下载curl..."
-    wget "${Corefile_curl}" -O curl.tar.xz 
+    wget -q "${curl_link}/${curl_version}/curl-linux-${pack_arch}-${curl_version}.tar.xz" -O curl.tar.xz 
     tar -xvf curl.tar.xz
     mv curl ./binary/curl
     chmod 0755 ./binary/curl
     rm -f curl.tar.xz
+
+    #修改customize.sh
+    if [ "$pack_arch" == "amd64" ]; then
+        sed -i "s/target_arch=.*/target_arch=\"x64\"/" ./customize.sh
+    else
+        sed -i "s/target_arch=.*/target_arch=\"$pack_arch\"/" ./customize.sh
+    fi
+
 }
 
 download_geoX(){
     # GeoIP
     echo "正在下载GeoIP..."
-    wget "${GeoIP_dat_url}" -O ./clash/GeoIP.dat 
+    wget -q "${GeoIP_dat_url}" -O ./clash/GeoIP.dat 
 
     # Country.mmdb
     echo "正在下载Country.mmdb..."
-    wget "${Country_mmdb_url}" -O ./clash/Country.mmdb 
+    wget -q "${Country_mmdb_url}" -O ./clash/Country.mmdb 
 
     # GeoSite
     echo "正在下载GeoSite..."
-    wget "${GeoSite_url}" -O ./clash/GeoSite.dat 
+    wget -q "${GeoSite_url}" -O ./clash/GeoSite.dat 
 }
 
 
@@ -55,7 +78,7 @@ download_config(){
         echo "订阅链接为空，跳过"
     else
         echo "正在下载config.yaml..."
-        wget "${Subcript_url}" -O ./clash/config.yaml 
+        wget -q "${Subcript_url}" -O ./clash/config.yaml 
     fi
 
     # 需要安装python3
@@ -84,7 +107,7 @@ download_dashboard(){
     fi
 
     echo "正在下载dashboard..."
-    wget "${Corefile_dashboard}" -O ./clash-dashboard.zip 
+    wget -q "${Corefile_dashboard}" -O ./clash-dashboard.zip 
     unzip -o ./clash-dashboard.zip -d ./clash-dashboard
     mv ./clash-dashboard/Yacd-meta-gh-pages ./clash-dashboard/dist
     rm -rf ./clash-dashboard/yacd-gh-pages
@@ -107,7 +130,24 @@ pack(){
     echo "打包完成"
 }
 
-while getopts "abdcgp" opt; do
+test_pack(){
+    echo "正在测试mihomo链接是否可用..."
+    if [ "$mihomo_tag" == "latest" ]; then
+        mihomo_tag=$(curl -sL "${mihomo_link}/latest/download/version.txt")
+    fi
+
+    mihomo_version=$(curl -sL "${mihomo_link}/download/${mihomo_tag}/version.txt")
+    if [[ `echo "${mihomo_version}" | grep "Not Found"` ]]; then
+        echo "mihomo链接不可用"
+        echo "测试链接 ${mihomo_link}/${mihomo_tag}/version.txt"
+        exit 1
+    else 
+        echo "mihomo版本:${mihomo_version}"
+    fi
+
+}
+
+while getopts "abcdgpt" opt; do
     case $opt in
         a)
             download_binaries
@@ -130,6 +170,9 @@ while getopts "abdcgp" opt; do
             ;;
         p)
             pack
+            ;;
+        t)
+            test_pack
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
