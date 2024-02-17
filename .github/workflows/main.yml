@@ -1,0 +1,28 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - CHANGELOG.md
+
+jobs:
+  release:
+    name: Release empty module
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        shell: bash
+        run: |
+          sed -i "s/pack_arch=.*/pack_arch=\"arm64\"/" ./files.config
+          bash ./pack.sh -a
+          sed -i "s/pack_arch=.*/pack_arch=\"amd64\"/" ./files.config
+          bash ./pack.sh -b
+          bash ./pack.sh -p
+      - name: Save Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: release
+    
