@@ -1,0 +1,51 @@
+on:
+  workflow_dispatch:
+  
+
+jobs:
+  release:
+    name: Release empty module
+    
+    runs-on:
+    - ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Set to Alpha branch
+      shell: bash
+      run: |
+        sed -i "s/mihomo_tag=.*/mihomo_tag=\"Prerelease-Alpha\"/" ./files.config
+    
+    - name: Build arm64
+      shell: bash
+      run: |
+        sed -i "s/pack_arch=.*/pack_arch=\"arm64\"/" ./files.config
+        bash ./pack.sh -a
+  
+    - name: Build amd64
+      shell: bash
+      run: |
+        sed -i "s/pack_arch=.*/pack_arch=\"amd64\"/" ./files.config
+        bash ./pack.sh -b
+        bash ./pack.sh -p
+  
+    - name: Save Artifacts ARM64
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-arm64.zip
+        path: release/MFM-arm64-*.zip
+  
+    - name: Save Artifacts AMD64
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-amd64.zip
+        path: release/MFM-amd64-*.zip
+  
+    - name: Save Version
+      uses: actions/upload-artifact@v4
+      with:
+        name: version.txt
+        path: version
+  
