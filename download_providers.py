@@ -50,6 +50,9 @@ def download_provider(folder:str):
                         print(f"下载成功")
         except KeyError:
             print("没有proxy-providers,跳过")
+        except TypeError:
+            print("config.yaml无yaml结构")
+            return
             
         try:
             rule_providers = config['rule-providers']
@@ -65,7 +68,7 @@ def download_provider(folder:str):
                         print(f"下载成功")          
         except KeyError:
             print("没有rule-providers,跳过")
-                
+            
 if __name__=="__main__":
     
     if os.sys.argv.__len__()>1:
