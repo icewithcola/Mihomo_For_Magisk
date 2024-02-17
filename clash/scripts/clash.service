@@ -118,7 +118,7 @@ start_clash() {
                 mkdir -p /dev/net
                 ln -sf /dev/tun /dev/net/tun
             fi
-            mv /data/clash/run/kernel.log /data/clash/run/kernel.old.log
+            [ ! -f /data/clash/run/kernel.log ] || mv /data/clash/run/kernel.log -f /data/clash/run/kernel.old.log
             ulimit -SHn 1000000
             nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
             echo -n $! > ${Clash_pid_file}

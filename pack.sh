@@ -7,10 +7,7 @@ set -e
 
 # 下载文件
 download_binaries(){
-    if [ -d ./binary ]; then
-        rm -rf ./binary
-    fi
-    mkdir ./binary
+    mkdir -p ./binary
     if [ -f ./version ]; then
         rm ./version
     fi
@@ -35,7 +32,7 @@ download_binaries(){
     fi
     mihomo_version=$(curl -sL "${mihomo_link}/download/${mihomo_tag}/version.txt")
     echo "mihomo版本:${mihomo_version}" >> ./version
-    wget -q "${mihomo_link}/download/${mihomo_tag}/mihomo-${arch}-${mihomo_version}.gz" -O mihomo.gz 
+    wget -q --show-progress "${mihomo_link}/download/${mihomo_tag}/mihomo-${arch}-${mihomo_version}.gz" -O mihomo.gz 
     gunzip mihomo.gz
     mv "mihomo" ./binary/clash
     chmod 0755 ./binary/clash
@@ -43,7 +40,7 @@ download_binaries(){
 
     # curl
     echo "正在下载curl..."
-    wget -q "${curl_link}/${curl_version}/curl-linux-${pack_arch}-${curl_version}.tar.xz" -O curl.tar.xz 
+    wget -q --show-progress "${curl_link}/${curl_version}/curl-linux-${pack_arch}-${curl_version}.tar.xz" -O curl.tar.xz 
     tar -xvf curl.tar.xz
     mv curl ./binary/curl
     chmod 0755 ./binary/curl
@@ -61,15 +58,15 @@ download_binaries(){
 download_geoX(){
     # GeoIP
     echo "正在下载GeoIP..."
-    wget -q "${GeoIP_dat_url}" -O ./clash/GeoIP.dat 
+    wget -q --show-progress "${GeoIP_dat_url}" -O ./clash/GeoIP.dat 
 
     # Country.mmdb
     echo "正在下载Country.mmdb..."
-    wget -q "${Country_mmdb_url}" -O ./clash/Country.mmdb 
+    wget -q --show-progress "${Country_mmdb_url}" -O ./clash/Country.mmdb 
 
     # GeoSite
     echo "正在下载GeoSite..."
-    wget -q "${GeoSite_url}" -O ./clash/GeoSite.dat 
+    wget -q --show-progress "${GeoSite_url}" -O ./clash/GeoSite.dat 
 }
 
 
@@ -78,7 +75,7 @@ download_config(){
         echo "订阅链接为空，跳过"
     else
         echo "正在下载config.yaml..."
-        wget -q "${Subcript_url}" -O ./clash/config.yaml 
+        wget -q --show-progress "${Subcript_url}" -O ./clash/config.yaml 
     fi
 
     # 需要安装python3
@@ -86,12 +83,8 @@ download_config(){
         echo "请安装python3以自动下载Provider"
         return
     fi   
-    if [ -z "./clash/proxy_providers" ]; then
-        mkdir ./clash/proxy_providers
-    fi
-    if [ -z "./clash/rule_providers" ]; then
-        mkdir ./clash/rule_providers
-    fi
+        mkdir -p ./clash/proxy_providers
+        mkdir -p ./clash/rule_providers
 
     python3 ./download_providers.py "$(dirname "$0")/clash"
 }
@@ -107,7 +100,7 @@ download_dashboard(){
     fi
 
     echo "正在下载dashboard..."
-    wget -q "${Corefile_dashboard}" -O ./clash-dashboard.zip 
+    wget -q --show-progress "${Corefile_dashboard}" -O ./clash-dashboard.zip 
     unzip -o ./clash-dashboard.zip -d ./clash-dashboard
     mv ./clash-dashboard/Yacd-meta-gh-pages ./clash-dashboard/dist
     rm -rf ./clash-dashboard/yacd-gh-pages
@@ -118,14 +111,12 @@ download_dashboard(){
 pack(){
     echo "开始打包..."
 
-    if [ -d ./release ]; then
-        rm -rf ./release
-    fi
-    mkdir ./release
+    mkdir -p ./release
 
-    zip -r MFM.zip . -x "pack.sh" "files.config" "release/*" ".git/*" ".gitignore"
-    mv MFM.zip ./release/MFM.zip
-    md5sum ./release/MFM.zip > ./release/MFM.zip.md5
+    filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
+    zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore"
+    mv -f $filename ./release/$filename
+    md5sum ./release/$filename > ./release/$filename.md5
 
     echo "打包完成"
 }
