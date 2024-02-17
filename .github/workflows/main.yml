@@ -15,16 +15,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Build arm64
         shell: bash
         run: |
           sed -i "s/pack_arch=.*/pack_arch=\"arm64\"/" ./files.config
           bash ./pack.sh -a
-      
+
       - name: Build amd64
         shell: bash
-        run: |    
+        run: |
           sed -i "s/pack_arch=.*/pack_arch=\"amd64\"/" ./files.config
           bash ./pack.sh -b
           bash ./pack.sh -p
@@ -32,11 +32,17 @@ jobs:
       - name: Save Artifacts ARM64
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: release-arm64.zip
           path: release/MFM-arm64-*.zip
-      
+
       - name: Save Artifacts AMD64
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: release-amd64.zip
           path: release/MFM-amd64-*.zip
+
+      - name: Save Version
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: version
