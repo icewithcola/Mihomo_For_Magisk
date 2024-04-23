@@ -37,6 +37,7 @@ check_lastinstall(){
             rm -rf "${clash_data_dir}.old"
         fi
         mv -f ${clash_data_dir} ${clash_data_dir}.old
+        set_perm_recursive ${clash_data_dir}.old ${system_uid} ${system_gid} 0755 0644 # 修复权限
     fi
 }
 

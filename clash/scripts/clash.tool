@@ -67,7 +67,8 @@ monitor_local_ipv4() {
 }
 
 restart_clash() {
-     ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
+    ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
+    sleep 5
     ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
     if [ "$?" == "0" ]; then
         echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 内核成功重启." >>${CFM_logs_file}

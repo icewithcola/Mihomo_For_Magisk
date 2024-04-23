@@ -162,8 +162,11 @@ kill_clash() {
 }
 
 
-while getopts ":sk" signal ; do
+while getopts ":skc" signal ; do
     case ${signal} in
+        c)
+            clean_last
+            ;;
         s)
             start_clash
             ;;

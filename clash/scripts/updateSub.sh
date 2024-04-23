@@ -8,7 +8,7 @@ tempPath="/data/clash/config.new.yaml"
 Clash_bin_path="/data/adb/modules/Mihomo_For_Magisk/system/bin/clash"
 CFM_logs_file="/data/clash/run/run.logs"
 
-UpdateSub(){
+updateSub(){
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 更新订阅." >> ${CFM_logs_file}
     # 验证是否设置了订阅链接
     if [ -z "${Subcript_url}" ]; then
@@ -34,4 +34,4 @@ UpdateSub(){
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 订阅更新成功." >> ${CFM_logs_file}
 }
 
-UpdateSub
+updateSub
