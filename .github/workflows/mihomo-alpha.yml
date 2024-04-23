@@ -22,26 +22,25 @@ jobs:
       shell: bash
       run: |
         sed -i "s/pack_arch=.*/pack_arch=\"arm64\"/" ./files.config
-        bash ./pack.sh -a
+        bash ./pack.sh -c
   
     - name: Build amd64
       shell: bash
       run: |
         sed -i "s/pack_arch=.*/pack_arch=\"amd64\"/" ./files.config
-        bash ./pack.sh -b
-        bash ./pack.sh -p
+        bash ./pack.sh -c
   
     - name: Save Artifacts ARM64
       uses: actions/upload-artifact@v4
       with:
         name: release-arm64.zip
-        path: release/MFM-arm64-*.zip
+        path: release-arm64
   
     - name: Save Artifacts AMD64
       uses: actions/upload-artifact@v4
       with:
         name: release-amd64.zip
-        path: release/MFM-amd64-*.zip
+        path: release-amd64
   
     - name: Save Version
       uses: actions/upload-artifact@v4
