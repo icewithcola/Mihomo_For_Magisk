@@ -138,6 +138,14 @@ test_pack(){
 
 }
 
+ci_pack(){
+    pack
+    filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
+    mkdir -p release-$pack_arch
+    
+    unzip $filename -d release-$pack_arch
+}
+
 while getopts "abcdgpt" opt; do
     case $opt in
         a)
@@ -150,6 +158,14 @@ while getopts "abcdgpt" opt; do
         b)
             download_binaries
             ;;
+
+        c) # for CI usage
+            download_binaries
+            download_geoX
+            download_config
+            download_dashboard
+            ci_pack
+            ;;   
         d)
             download_dashboard
             ;;
