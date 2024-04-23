@@ -143,7 +143,7 @@ ci_pack(){
     filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
     mkdir -p release-$pack_arch
     
-    unzip $filename -d release-$pack_arch
+    unzip ./release/$filename -d release-$pack_arch
 }
 
 while getopts "abcdgpt" opt; do
