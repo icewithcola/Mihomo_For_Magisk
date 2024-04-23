@@ -46,6 +46,9 @@ release_file(){
     mkdir -p ${clash_data_dir}
     mkdir -p ${MODPATH}${ca_path}
 
+    mkdir -p ${clash_data_dir}/proxy_providers
+    mkdir -p ${clash_data_dir}/rule_providers
+    
     unzip -o "${ZIPFILE}" -x 'META-INF/*' -d $MODPATH >&2
     ui_print $(cat $MODPATH/version)
     mkdir ${clash_data_dir}

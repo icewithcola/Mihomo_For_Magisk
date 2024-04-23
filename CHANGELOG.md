@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.2.2
+- 修复上个版本的bug
 ## 1.2.1
 - 现在Magisk管理页面会有内核版本了
 - 修复typo导致不复制provider

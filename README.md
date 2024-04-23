@@ -12,8 +12,11 @@
 存储打包时的变量，具体请看该文件中的注释
 |`pack_arch`|对应变量|特殊说明|
 |--|--|--|
-|arm64|`mihomo_arch_arm64`|默认指安卓平台`android-arm64`|
-|amd64|`mihomo_arch_amd64`|默认使用`compatible`|
+|arm64|`mihomo_arch_arm64`|默认指安卓平台`android-arm64-v8`|
+|amd64|`mihomo_arch_amd64`|默认使用`android-amd64`|
+
+**注意**
+`amd64`无测试（无设备），已知AVD上需要`linux-amd64-compatible`
 
 |`mihomo_tag`|说明|
 |---|---|
@@ -21,6 +24,8 @@
 |`Prerelease-Alpha`|指向最新测试版|
 |release tag例如`v1.1.4`|指向指定的版本|
 
+**注意**
+`pack_arch`的值在不同版本**不一定相同**\
 `curl_version` 可以手动指定curl的版本，注意`x.y.z-k`这样的版本可能无法正常获取到下载链接
 #### 注意
 更新`files.config`中的链接时请同时更新`./clash/clash.config`中的相同部分，*(可忽略没有的变量)*。\
