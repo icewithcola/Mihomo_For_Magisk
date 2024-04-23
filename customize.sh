@@ -68,8 +68,8 @@ move_config(){
         echo "在旧的安装中找到可用的config.yaml等配置,将其迁移到新的目录."
         cp -f ${clash_data_dir}.old/config.yaml ${clash_data_dir}/config.yaml
         cp -f ${clash_data_dir}.old/clash.config ${clash_data_dir}/clash.config
-        cp -f ${clash_data_dir}.old/proxy_provisers/* ${clash_data_dir}/proxy_provisers/
-        cp -f ${clash_data_dir}.old/rule_provisers/* ${clash_data_dir}/rule_provisers/
+        cp -f ${clash_data_dir}.old/proxy_providers/* ${clash_data_dir}/proxy_providers/
+        cp -f ${clash_data_dir}.old/rule_providers/* ${clash_data_dir}/rule_providers/
     fi
 }
 

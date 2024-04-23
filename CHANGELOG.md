@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.2.1
+- 现在Magisk管理页面会有内核版本了
+- 修复typo导致不复制provider
 ## 1.2.0
 - 现在 Github Actions 可以自动打包，可以直接安装 
 ## 1.1.1

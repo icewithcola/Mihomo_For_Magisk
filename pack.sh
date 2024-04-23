@@ -109,6 +109,10 @@ download_dashboard(){
 
 
 pack(){
+    # 给module.prop加入版本号
+    version=$(cat ./version)
+    sed -i "s/mihomo版本:/$version/" ./module.prop
+
     echo "开始打包..."
 
     mkdir -p ./release
