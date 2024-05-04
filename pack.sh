@@ -121,7 +121,7 @@ pack(){
 
     mkdir -p ./release
 
-    filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
+    filename="MFM-${pack_arch}-v`cat ./version | awk -F 'v' '{print $2}'`.zip"
     zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*" "cacert-etag.txt"
     mv -f $filename ./release/$filename
     md5sum ./release/$filename > ./release/$filename.md5
