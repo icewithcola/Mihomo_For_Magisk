@@ -31,7 +31,7 @@ download_binaries(){
         mihomo_tag=$(curl -sL "${mihomo_link}/latest/download/version.txt")
     fi
     mihomo_version=$(curl -sL "${mihomo_link}/download/${mihomo_tag}/version.txt")
-    echo "mihomo版本: ${mihomo_version}" >> ./version
+    echo "mihomo版本:${mihomo_version}" >> ./version
     wget -q --show-progress "${mihomo_link}/download/${mihomo_tag}/mihomo-${arch}-${mihomo_version}.gz" -O mihomo.gz 
     gunzip mihomo.gz
     mv "mihomo" ./binary/clash
@@ -114,14 +114,14 @@ download_dashboard(){
 
 pack(){
     # 给module.prop加入版本号
-    version=$(cat ./version)
-    sed -i "s/mihomo版本:.*/$version/" ./module.prop
+    version=$(cat ./version | awk -F 'v' '{print $2}')
+    sed -i "s/mihomo版本:.*/mihomo版本: $version/" ./module.prop
 
     echo "开始打包..."
 
     mkdir -p ./release
 
-    filename="MFM-${pack_arch}-v`cat ./version | awk -F 'v' '{print $2}'`.zip"
+    filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
     zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*" "cacert-etag.txt"
     mv -f $filename ./release/$filename
     md5sum ./release/$filename > ./release/$filename.md5
