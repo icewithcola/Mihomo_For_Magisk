@@ -31,7 +31,7 @@ download_binaries(){
         mihomo_tag=$(curl -sL "${mihomo_link}/latest/download/version.txt")
     fi
     mihomo_version=$(curl -sL "${mihomo_link}/download/${mihomo_tag}/version.txt")
-    echo "mihomo版本:${mihomo_version}" >> ./version
+    echo "mihomo版本: ${mihomo_version}" >> ./version
     wget -q --show-progress "${mihomo_link}/download/${mihomo_tag}/mihomo-${arch}-${mihomo_version}.gz" -O mihomo.gz 
     gunzip mihomo.gz
     mv "mihomo" ./binary/clash
@@ -45,6 +45,10 @@ download_binaries(){
     mv curl ./binary/curl
     chmod 0755 ./binary/curl
     rm -f curl.tar.xz
+
+    # 现在打包时下载最新的cacert.pem
+    curl --etag-compare cacert-etag.txt --etag-save cacert-etag.txt --remote-name https://curl.se/ca/cacert.pem
+
 
     #修改customize.sh
     if [ "$pack_arch" == "amd64" ]; then
@@ -118,7 +122,7 @@ pack(){
     mkdir -p ./release
 
     filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
-    zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*"
+    zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*" "cacert-etag.txt"
     mv -f $filename ./release/$filename
     md5sum ./release/$filename > ./release/$filename.md5
 
