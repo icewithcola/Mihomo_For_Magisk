@@ -35,5 +35,3 @@ updateSub(){
     # Also print to stdout
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 订阅更新成功." 
 }
-
-updateSub

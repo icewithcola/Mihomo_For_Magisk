@@ -215,14 +215,15 @@ limit_clash() {
 update_cofig() {
     # Updat config.yaml
     # 1. generate new `config.yaml` and run directory
-    exec $(dirname $0)/clash.service -s
+    . $(dirname $0)/clash.service
+    start_clash
     # 2. restart with api
-    controller-api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
+    controller_api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
     secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
-    if [-z $secret]; then
-        curl 'http://${controller-api}/configs?force=true'
+    if [-z ${secret}]; then
+        curl 'http://'${controller_api}'/configs?force=true'
     else        
-        curl -H 'Authorization: Bearer ${secret}' 'http://${controller-api}/configs?force=true'
+        curl -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true'
     fi
 }
 
@@ -232,7 +233,8 @@ while getopts ":kfmpusl" signal; do
         update_pre
         ;;
     s)
-        exec $(dirname $0)/updateSub.sh
+        . $(dirname $0)/updateSub.sh
+        updateSub
         update_cofig
         ;;
     k)
