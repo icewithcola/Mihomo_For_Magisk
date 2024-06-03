@@ -33,13 +33,13 @@ jobs:
     - name: Save Artifacts ARM64
       uses: actions/upload-artifact@v4
       with:
-        name: release-arm64.zip
+        name: release-alpha-arm64
         path: release-arm64
   
     - name: Save Artifacts AMD64
       uses: actions/upload-artifact@v4
       with:
-        name: release-amd64.zip
+        name: release-alpha-amd64
         path: release-amd64
   
     - name: Save Version
