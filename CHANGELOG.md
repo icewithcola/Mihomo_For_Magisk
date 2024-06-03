@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.2.4 
+- 优化更新`config.yaml`体验
 ## 1.2.3
 - 现在会更新cacert.pem了（需要 curl `7.68.0` 以上以支持etag相关功能）
 - 修复typo（欢迎大家继续找typo等）

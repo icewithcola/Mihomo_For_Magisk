@@ -32,6 +32,8 @@ updateSub(){
     # 替换
     mv -f ${tempPath} ${confPath}
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 订阅更新成功." >> ${CFM_logs_file}
+    # Also print to stdout
+    echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 订阅更新成功." 
 }
 
 updateSub

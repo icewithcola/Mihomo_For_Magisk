@@ -212,6 +212,20 @@ limit_clash() {
     echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 限制内存: ${Cgroup_memory_limit}." >>${CFM_logs_file}
 }
 
+update_cofig() {
+    # Updat config.yaml
+    # 1. generate new `config.yaml` and run directory
+    exec $(dirname $0)/clash.service -s
+    # 2. restart with api
+    controller-api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
+    secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
+    if [-z $secret]; then
+        curl 'http://${controller-api}/configs?force=true'
+    else        
+        curl -H 'Authorization: Bearer ${secret}' 'http://${controller-api}/configs?force=true'
+    fi
+}
+
 while getopts ":kfmpusl" signal; do
     case ${signal} in
     u)
@@ -219,7 +233,7 @@ while getopts ":kfmpusl" signal; do
         ;;
     s)
         exec $(dirname $0)/updateSub.sh
-        restart_clash
+        update_cofig
         ;;
     k)
         if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ]; then
