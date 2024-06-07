@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.2.5
+- 修复错误
 ## 1.2.4 
 - 优化更新`config.yaml`体验，现在理应只需要一次`/data/clash/scripts/clash.tool -s`
 ## 1.2.3

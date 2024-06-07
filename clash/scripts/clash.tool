@@ -217,13 +217,14 @@ update_cofig() {
     # 1. generate new `config.yaml` and run directory
     . $(dirname $0)/clash.service
     start_clash
-    # 2. restart with api
+    # 2. restart with api 
+    # See https://wiki.metacubex.one/api/
     controller_api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
     secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
-    if [-z ${secret}]; then
-        curl 'http://'${controller_api}'/configs?force=true'
+    if [ -z ${secret}]; then
+        curl -X PUT 'http://'${controller_api}'/configs?force=true'
     else        
-        curl -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true'
+        curl -X PUT -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true'
     fi
 }
 
