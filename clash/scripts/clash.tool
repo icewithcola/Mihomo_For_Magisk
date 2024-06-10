@@ -222,10 +222,11 @@ update_cofig() {
     controller_api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
     secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
     if [ -z ${secret}]; then
-        curl -X PUT 'http://'${controller_api}'/configs?force=true'
+        curl -s -X PUT 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
     else        
-        curl -X PUT -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true'
+        curl -s -X PUT -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
     fi
+    echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 订阅更新成功." >>${CFM_logs_file}
 }
 
 while getopts ":kfmpusl" signal; do
