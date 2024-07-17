@@ -55,7 +55,7 @@ jobs:
           OUT_DIR="release/"
           export amd64=$(find $OUT_DIR -name "MFM-amd64-v*.zip")
           export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
-          if [ ! -z "${{ secrets.BOT_TOKEN }}"]; then
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
                   -F arm64="@$arm64" \
