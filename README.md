@@ -1,4 +1,7 @@
 # Mihomo For Magisk
+## 下载
+- Github actions
+- [Telegram Channel](https://t.me/mfm_updates)
 ## 特性
 - 自助打包更新`原神`
 - 可预下载`原神`资源包(GeoX,MMDB,Dashboard)
