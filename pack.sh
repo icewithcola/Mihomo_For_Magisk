@@ -122,7 +122,7 @@ pack(){
     mkdir -p ./release
 
     filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
-    zip -r $filename . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*" "cacert-etag.txt"
+    zip -r $filename -q . -x "pack.sh" "files.config" "download_providers.py" "release/*" ".git/*" ".gitignore" ".github/*" "cacert-etag.txt" "release-amd64/*" "release-arm64/*" @
     mv -f $filename ./release/$filename
     md5sum ./release/$filename > ./release/$filename.md5
 
@@ -150,7 +150,7 @@ ci_pack(){
     pack
     filename="MFM-${pack_arch}-`cat ./version | awk -F ':' '{print $2}'`.zip"
     mkdir -p release-$pack_arch
-    
+    echo "CI:解压中"
     unzip ./release/$filename -d release-$pack_arch
 }
 

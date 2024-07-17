@@ -1,6 +1,7 @@
 # CHANGELOG
 ## 1.2.7
-- 无功能更新，现在会发布到 Telegram Channel
+- 现在会发布到 Telegram Channel
+- 修复CI打包的逻辑错误
 ## 1.2.6
 - 修复错误
 - 更新默认template
