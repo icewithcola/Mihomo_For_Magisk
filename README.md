@@ -1,7 +1,10 @@
 # Mihomo For Magisk
+![](https://socialify.git.ci/icewithcola/Mihomo_For_Magisk/image?description=1&forks=1&issues=1&name=1&owner=1&pulls=1&stargazers=1&theme=Dark)
+Mihomo For Magisk 是一个简单的 Mihomo 通过 Magisk 运行的模块。提供基本的 Mihomo 功能支持。
 ## 下载
-- Github actions
-- [Telegram Channel](https://t.me/mfm_updates)
+- [![CI Build](https://github.com/icewithcola/Mihomo_For_Magisk/actions/workflows/main.yml/badge.svg)](https://github.com/icewithcola/Mihomo_For_Magisk/actions/workflows/main.yml)
+- [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=@mfm_updates&color=5BCEFA)](https://t.me/NullgramClient)
+
 ## 特性
 - 自助打包更新`原神`
 - 可预下载`原神`资源包(GeoX,MMDB,Dashboard)
