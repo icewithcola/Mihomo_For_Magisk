@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.2.8
+- 修复iptables处理逻辑
 ## 1.2.7
 - 现在会发布到 Telegram Channel
 - 修复CI打包的逻辑错误

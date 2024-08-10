@@ -135,6 +135,7 @@ start_clash() {
         exit 1
     fi
 
+    ${scripts_dir}/clash.iptables -s
     return # 去掉端口检查
 
     if [ "${Clash_tun_status}" == "true" ]; then
@@ -150,6 +151,7 @@ start_clash() {
 }
 
 stop_clash() {
+    ${scripts_dir}/clash.iptables -k
     kill_clash
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" >> ${CFM_logs_file}
 }
