@@ -3,7 +3,7 @@
 Mihomo For Magisk 是一个简单的 Mihomo 通过 Magisk 运行的模块。提供基本的 Mihomo 功能支持。
 ## 下载
 - [![CI Build](https://github.com/icewithcola/Mihomo_For_Magisk/actions/workflows/main.yml/badge.svg)](https://github.com/icewithcola/Mihomo_For_Magisk/actions/workflows/main.yml)
-- [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=@mfm_updates&color=5BCEFA)](https://t.me/NullgramClient)
+- [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=@mfm_updates&color=5BCEFA)](https://t.me/mfm_updates)
 
 ## 特性
 - 自助打包更新`原神`
