@@ -21,16 +21,24 @@ tun:
     - any:53
   auto-route: true
   auto-detect-interface: true
-# 技术原因，enable必须在tun:的下一行
 
 dns:
   enable: true
   listen: 0.0.0.0:1053
   ipv6: true
+# DNS
   default-nameserver:
     - tls://223.5.5.5:853
     - tls://1.1.1.1
     - tls://8.8.8.8
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.adguard.com/dns-query
+  fallback:
+    - https://dns.google/dns-query
+    - https://doh.opendns.com/dns-query
+# FakeIP
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
@@ -106,15 +114,15 @@ dns:
     - "*.*.xboxlive.com"
     - speedtest.cros.wr.pvp.net
     - "*.d.meituan.net"
-
+# Fallback
   fallback-filter:
-  geoip: true
-  geoip-code: CN
-  ipcidr:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
       - 240.0.0.0/4
       - 0.0.0.0/32
       - 127.0.0.1/32
-  domain:
+    domain:
       - +.google.com
       - +.facebook.com
       - +.twitter.com
@@ -124,11 +132,6 @@ dns:
       - +.googleapis.cn
       - +.googleapis.com
       - +.gvt1.com
-  nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://cloudflare-dns.com/dns-query
-  fallback:
-    - https://doh.opendns.com/dns-query
-    - https://public.dns.iij.jp/dns-query
-    - https://dns.adguard.com/dns-query
-    - https://dns.google/dns-query
+      - +.duckduckgo.com
+
+

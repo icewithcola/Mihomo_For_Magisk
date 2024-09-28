@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.2.8-1
+- 修改默认`template`， 修改错误的`fallback-filter`，修改默认 DNS 服务器
 ## 1.2.8
 - 修复iptables处理逻辑
 ## 1.2.7
