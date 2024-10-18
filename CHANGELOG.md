@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.3
+- 使用更新的 [MetacubeXD](https://github.com/MetaCubeX/metacubexd) 作为 dashboard
+- template 默认的 DNS 加强，减少被劫持的可能
 ## 1.2.8-1
 - 修改默认`template`， 修改错误的`fallback-filter`，修改默认 DNS 服务器
 ## 1.2.8
