@@ -94,7 +94,7 @@ download_config(){
 }
 
 download_dashboard(){
-    if [ -z "${Corefile_dashboard}" ]; then
+    if [ -z "${pack_dashboard_repo}" ]; then
         echo "Dashboard链接为空，跳过"
         return
     fi
@@ -104,11 +104,8 @@ download_dashboard(){
     fi
 
     echo "正在下载dashboard..."
-    wget -q --show-progress "${Corefile_dashboard}" -O ./clash-dashboard.zip 
-    unzip -o ./clash-dashboard.zip -d ./clash-dashboard
-    mv ./clash-dashboard/Yacd-meta-gh-pages ./clash-dashboard/dist
-    rm -rf ./clash-dashboard/yacd-gh-pages
-    rm -f ./clash-dashboard.zip
+    mkdir -p ./clash-dashboard
+    git clone ${pack_dashboard_repo} -b ${pack_dashboard_branch} ./clash-dashboard/dist
 }
 
 
