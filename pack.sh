@@ -106,6 +106,7 @@ download_dashboard(){
     echo "正在下载dashboard..."
     mkdir -p ./clash-dashboard
     git clone ${pack_dashboard_repo} -b ${pack_dashboard_branch} ./clash-dashboard/dist
+    rm -rf ./clash-dashboard/dist/.git
 }
 
 
