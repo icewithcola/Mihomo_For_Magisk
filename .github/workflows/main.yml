@@ -57,7 +57,7 @@ jobs:
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
-                  -F arm64="@$arm64" \
-                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=New%20Release%20of%20arm64%3Av${VERSION}&document=attatch%3A%2F%2Farm64"
+                  -F document=@"$arm64" \
+                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=New%20Release%20of%20arm64%3Av${VERSION}"
           fi
           
