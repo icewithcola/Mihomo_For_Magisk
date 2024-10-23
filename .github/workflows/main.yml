@@ -53,12 +53,11 @@ jobs:
         run: |
           VERSION=$(cat ./version | awk -F 'v' '{print $2}')
           OUT_DIR="release/"
-          export amd64=$(find $OUT_DIR -name "MFM-amd64-v*.zip")
           export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
                   -F arm64="@$arm64" \
-                  "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHANNEL}&media=%5B%7B%22type%22%3A%22document%22%2C%20%22media%22%3A%22attach%3A%2F%2Farm64%22%2C%22caption%22%:${VERSION}%7D%5D"
+                  "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHANNEL}&media=%5B%7B%22type%22%3A%22document%22%2C%20%22media%22%3A%22attach%3A%2F%2Farm64%22%2C%22caption%22%3A${VERSION}%7D%5D"
           fi
           
