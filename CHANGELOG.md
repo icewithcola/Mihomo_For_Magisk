@@ -1,5 +1,5 @@
 # CHANGELOG
-## 1.3
+## 1.3.0
 - 使用更新的 [MetacubeXD](https://github.com/MetaCubeX/metacubexd) 作为 dashboard
 - template 默认的 DNS 加强，减少被劫持的可能
 ## 1.2.8-1
