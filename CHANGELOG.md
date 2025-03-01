@@ -1,4 +1,8 @@
 # CHANGELOG
+## 1.3.1
+- 继续优化 template，细分 template DNS
+- template DNS 减少使用 AliDNS 解决可能的严重限速问题
+- 现在更多信息会打印到 `stdout`
 ## 1.3.0
 - 使用更新的 [MetacubeXD](https://github.com/MetaCubeX/metacubexd) 作为 dashboard
 - template 默认的 DNS 加强，减少被劫持的可能

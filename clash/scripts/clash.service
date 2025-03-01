@@ -94,12 +94,16 @@ start_clash() {
 
         if [ "${auto_updateGeoSite}" == "true" ]; then
             echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
-            && echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 自动更新GeoX定时已开启." >> ${CFM_logs_file}
+            && echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 自动更新GeoX定时已开启." | tee -a ${CFM_logs_file}
         fi
 
         if [ "${auto_updateSubcript}" == "true" ]; then
-            echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
-            && echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 自动更新订阅定时已开启." >> ${CFM_logs_file}
+            if [ -z "$Subcript_url" ]; then 
+                echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"warn: 自动更新订阅定时已开启，但未设置订阅链接" | tee -a ${CFM_logs_file}
+            else
+                echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
+                && echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 自动更新订阅定时已开启." | tee -a ${CFM_logs_file}
+            fi
         fi
 
         sed -i '/^[  ]*$/d' ${CFM_logs_file}
@@ -153,7 +157,7 @@ start_clash() {
 stop_clash() {
     ${scripts_dir}/clash.iptables -k
     kill_clash
-    echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" >> ${CFM_logs_file}
+    echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" | tee -a ${CFM_logs_file}
 }
 
 kill_clash() {
