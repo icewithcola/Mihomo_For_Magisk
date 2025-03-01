@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.3.2
+- 添加 `action.sh`，现在可以在 magisk 里面点开 webui
 ## 1.3.1
 - 继续优化 template，细分 template DNS
 - template DNS 减少使用 AliDNS 解决可能的严重限速问题

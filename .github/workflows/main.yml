@@ -54,10 +54,11 @@ jobs:
           VERSION=$(cat ./version | awk -F 'v' '{print $2}')
           OUT_DIR="release/"
           export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
+          export caption=$(echo -e "New Release of arm64:v${VERSION}\nCommit Message:\n ${{ github.event.head_commit.message }}" | jq -Rsr @uri )
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
                   -F document=@"$arm64" \
-                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=New%20Release%20of%20arm64%3Av${VERSION}"
+                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=${caption}"
           fi
           
