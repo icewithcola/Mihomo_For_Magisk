@@ -125,6 +125,6 @@ setup_busybox_internal() {
 check_env
 check_lastinstall
 release_file
-setup_busybox
 move_config
+setup_busybox
 setup_perm
