@@ -126,6 +126,7 @@ setup_busybox_internal() {
     
     for file in $files; do
         if [ -f "$file" ]; then
+            ui_print "Replacing in $file"
             sed -i "s|busybox_path=\"replace\"|busybox_path=\"$busybox_path\"|g" "$file"
         fi
     done
