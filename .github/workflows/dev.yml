@@ -1,0 +1,62 @@
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - dev
+
+jobs:
+  release:
+    name: Release empty module
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build arm64
+        shell: bash
+        run: |
+          sed -i "s/pack_arch=.*/pack_arch=\"arm64\"/" ./files.config
+          bash ./pack.sh -c
+
+      - name: Build amd64
+        shell: bash
+        run: |
+          sed -i "s/pack_arch=.*/pack_arch=\"amd64\"/" ./files.config
+          bash ./pack.sh -c
+
+      - name: Save Artifacts ARM64
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-arm64
+          path: release-arm64
+
+      - name: Save Artifacts AMD64
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-amd64
+          path: release-amd64
+
+      - name: Save Version
+        uses: actions/upload-artifact@v4
+        with:
+          name: version.txt
+          path: version
+      
+      - name: Upload to Telegram Channel
+        env:
+          CHANNEL: ${{ secrets.CHANNEL }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          VERSION=$(cat ./version | awk -F 'v' '{print $2}')
+          OUT_DIR="release/"
+          export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
+          export caption=$(echo -e "New Dev Release of arm64:v${VERSION}\nCommit Message:\n ${{ github.event.head_commit.message }} \n USE WITH CAUTION!\n开发版本，小心使用！" | jq -Rsr @uri )
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            curl -s -X POST \
+                  -H "Content-Type:multipart/form-data"\
+                  -F document=@"$arm64" \
+                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=${caption}"
+          fi
+          

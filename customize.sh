@@ -27,6 +27,18 @@ check_env(){
     if [ -z ${ZIPFILE} ]; then
         abort "检测到环境变量问题，请检查Magisk"
     fi
+
+    maybe_busybox="/data/adb/magisk/busybox /data/adb/ap/bin/busybox /data/adb/ksu/bin/busybox"
+    
+    for path in $maybe_busybox; do
+        if [ -x "$path" ]; then
+            busybox_path="$path"
+        fi
+    done
+
+    if [ -z ${busybox_path} ]; then
+        abort "无法找到您的 busybox，请提交 issue 至 github.com/icewithcola/Mihomo_For_Magisk 并备注您的环境"
+    done
 }
 
 check_lastinstall(){

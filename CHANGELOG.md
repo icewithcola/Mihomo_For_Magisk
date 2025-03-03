@@ -1,4 +1,6 @@
 # CHANGELOG
+## 1.4.0
+- 尝试支持 KSU/Apatch
 ## 1.3.2
 - 添加 `action.sh`，现在可以在 magisk 里面点开 webui
 ## 1.3.1
