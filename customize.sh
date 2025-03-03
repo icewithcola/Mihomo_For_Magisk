@@ -92,10 +92,10 @@ setup_perm(){
 }
 
 setup_busybox(){
-    if $KSU; then
+    if [ "${KSU}" ]; then
         ui_print "Setting up for KSU..."
         setup_busybox_internal "/data/adb/ksu/bin/busybox" 
-    elif $APATCH; then
+    elif [ "${APATCH}" ]; then
         ui_print "Setting up for Apatch..."
         setup_busybox_internal "/data/adb/ap/bin/busybox" 
     else
