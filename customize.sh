@@ -76,6 +76,10 @@ move_config(){
     fi
 }
 
+config_compatible(){ # 所有兼容性修改都在这里
+    sed -i '/# 上面的是给你操作的，下面的不懂就别乱改/,$d' "${clash_data_dir}/clash.config" 2>/dev/null # 1.4.0 分离 clash.config 内外逻辑
+}
+
 setup_perm(){
     ui_print "- 开始设置环境权限."
     set_perm_recursive ${MODPATH} 0 0 0755 0644
@@ -112,7 +116,7 @@ setup_busybox_internal() {
     
     busybox_path="$1"
     ui_print "Busybox at $1"
-    files="$MODPATH/service.sh $MODPATH/clash.config"
+    files="$MODPATH/service.sh $MODPATH/clash.internal.config"
     
     for file in $files; do
         if [ -f "$file" ]; then
@@ -126,5 +130,6 @@ check_env
 check_lastinstall
 release_file
 move_config
+config_compatible
 setup_busybox
 setup_perm
