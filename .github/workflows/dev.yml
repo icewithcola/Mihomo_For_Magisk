@@ -57,6 +57,6 @@ jobs:
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
                   -F document=@"$arm64" \
-                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&caption=${caption}"
+                  "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument?chat_id=${CHANNEL}&disable_notification=true&caption=${caption}"
           fi
           

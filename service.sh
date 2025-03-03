@@ -9,14 +9,10 @@ scripts_dir="${data_dir}/scripts"
 Clash_data_dir="/data/clash"
 Clash_run_path="${Clash_data_dir}/run"
 Clash_pid_file="${Clash_run_path}/clash.pid"
+busybox_path="replace"
 
-maybe_busybox="/data/adb/magisk/busybox /data/adb/ap/bin/busybox /data/adb/ksu/bin/busybox"
-busybox_path=""
-for path in $maybe_busybox; do
-    if [ -x "$path" ]; then
-        busybox_path="$path"
-    fi
-done
+
+
 
 if [ -f ${Clash_pid_file} ] ; then
     rm -rf ${Clash_pid_file}

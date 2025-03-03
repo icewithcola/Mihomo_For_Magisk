@@ -27,19 +27,6 @@ check_env(){
     if [ -z ${ZIPFILE} ]; then
         abort "检测到环境变量问题，请检查Magisk"
     fi
-
-    maybe_busybox="/data/adb/magisk/busybox /data/adb/ap/bin/busybox /data/adb/ksu/bin/busybox"
-    busybox_path=""
-    for path in $maybe_busybox; do
-        if [ -x "$path" ]; then
-            busybox_path="$path"
-            break
-        fi
-    done
-
-    if [ -z "${busybox_path}" ]; then
-        abort "无法找到您的 busybox，请提交 issue 至 github.com/icewithcola/Mihomo_For_Magisk 并备注您的环境"
-    done
 }
 
 check_lastinstall(){
@@ -104,9 +91,40 @@ setup_perm(){
     set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0644
 }
 
+setup_busybox(){
+    if $KSU; then
+        ui_print "Setting up for KSU..."
+        setup_busybox_internal "/data/adb/ksu/bin/busybox" 
+    elif $APATCH; then
+        ui_print "Setting up for Apatch..."
+        setup_busybox_internal "/data/adb/ap/bin/busybox" 
+    else
+        ui_print "Setting up for Magisk or unknown environment..."
+        setup_busybox_internal "/data/adb/magisk/busybox" 
+    fi
+}
+
+setup_busybox_internal() {
+    if [ -z "$1" ]; then
+        ui_print "$0 <busybox>"
+        abort
+    fi
+    
+    busybox_path="$1"
+    ui_print "Busybox at $1"
+    files="$MODPATH/service.sh $MODPATH/clash.config"
+    
+    for file in $files; do
+        if [ -f "$file" ]; then
+            sed -i "s|busybox_path=\"replace\"|busybox_path=\"$busybox_path\"|g" "$file"
+        fi
+    done
+}
+
 
 check_env
 check_lastinstall
 release_file
+setup_busybox
 move_config
 setup_perm
