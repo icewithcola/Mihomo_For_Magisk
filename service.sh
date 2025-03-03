@@ -11,7 +11,7 @@ Clash_run_path="${Clash_data_dir}/run"
 Clash_pid_file="${Clash_run_path}/clash.pid"
 
 maybe_busybox="/data/adb/magisk/busybox /data/adb/ap/bin/busybox /data/adb/ksu/bin/busybox"
-    
+busybox_path=""
 for path in $maybe_busybox; do
     if [ -x "$path" ]; then
         busybox_path="$path"

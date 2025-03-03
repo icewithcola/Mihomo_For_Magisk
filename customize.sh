@@ -29,14 +29,15 @@ check_env(){
     fi
 
     maybe_busybox="/data/adb/magisk/busybox /data/adb/ap/bin/busybox /data/adb/ksu/bin/busybox"
-    
+    busybox_path=""
     for path in $maybe_busybox; do
         if [ -x "$path" ]; then
             busybox_path="$path"
+            break
         fi
     done
 
-    if [ -z ${busybox_path} ]; then
+    if [ -z "${busybox_path}" ]; then
         abort "无法找到您的 busybox，请提交 issue 至 github.com/icewithcola/Mihomo_For_Magisk 并备注您的环境"
     done
 }
