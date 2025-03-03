@@ -77,7 +77,12 @@ move_config(){
 }
 
 config_compatible(){ # 所有兼容性修改都在这里
-    sed -i '/# 上面的是给你操作的，下面的不懂就别乱改/,$d' "${clash_data_dir}/clash.config" 2>/dev/null # 1.4.0 分离 clash.config 内外逻辑
+    # 1.4.0 分离 clash.config 内外逻辑
+    config_file="${clash_data_dir}/clash.config"
+    sed -i '/# 上面的是给你操作的，下面的不懂就别乱改/,$d' "$config_file" 2>/dev/null
+    if [ -f "$config_file" ] && ! grep -q "\. /data/clash/clash.internal.config" "$file"; then
+        sed -i '2i\. /data/clash/clash.internal.config' "$config_file"
+    fi
 }
 
 setup_perm(){
@@ -92,6 +97,7 @@ setup_perm(){
     set_perm_recursive ${clash_data_dir}/scripts ${system_uid} ${system_gid} 0755 0755
     set_perm  ${MODPATH}/system/bin/clash  ${system_uid}  ${system_gid}  6755
     set_perm  ${clash_data_dir}/clash.config ${system_uid} ${system_gid} 0755
+    set_perm  ${clash_data_dir}/clash.internal.config ${system_uid} ${system_gid} 0755
     set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0644
 }
 
@@ -116,7 +122,7 @@ setup_busybox_internal() {
     
     busybox_path="$1"
     ui_print "Busybox at $1"
-    files="$MODPATH/service.sh $MODPATH/clash.internal.config"
+    files="$MODPATH/service.sh $clash_data_dir/clash.internal.config"
     
     for file in $files; do
         if [ -f "$file" ]; then
@@ -130,6 +136,6 @@ check_env
 check_lastinstall
 release_file
 move_config
-config_compatible
 setup_busybox
+config_compatible
 setup_perm
