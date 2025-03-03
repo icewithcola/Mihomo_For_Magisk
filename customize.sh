@@ -76,6 +76,15 @@ move_config(){
     fi
 }
 
+config_compatible(){ # 所有兼容性修改都在这里
+    # 1.4.0 分离 clash.config 内外逻辑
+    config_file="${clash_data_dir}/clash.config"
+    sed -i '/# 上面的是给你操作的，下面的不懂就别乱改/,$d' "$config_file" 2>/dev/null
+    if [ -f "$config_file" ] && ! grep -q "\. /data/clash/clash.internal.config" "$file"; then
+        sed -i '2i\. /data/clash/clash.internal.config' "$config_file"
+    fi
+}
+
 setup_perm(){
     ui_print "- 开始设置环境权限."
     set_perm_recursive ${MODPATH} 0 0 0755 0644
@@ -88,7 +97,39 @@ setup_perm(){
     set_perm_recursive ${clash_data_dir}/scripts ${system_uid} ${system_gid} 0755 0755
     set_perm  ${MODPATH}/system/bin/clash  ${system_uid}  ${system_gid}  6755
     set_perm  ${clash_data_dir}/clash.config ${system_uid} ${system_gid} 0755
+    set_perm  ${clash_data_dir}/clash.internal.config ${system_uid} ${system_gid} 0755
     set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0644
+}
+
+setup_busybox(){
+    if [ "${KSU}" ]; then
+        ui_print "Setting up for KSU..."
+        setup_busybox_internal "/data/adb/ksu/bin/busybox" 
+    elif [ "${APATCH}" ]; then
+        ui_print "Setting up for Apatch..."
+        setup_busybox_internal "/data/adb/ap/bin/busybox" 
+    else
+        ui_print "Setting up for Magisk or unknown environment..."
+        setup_busybox_internal "/data/adb/magisk/busybox" 
+    fi
+}
+
+setup_busybox_internal() {
+    if [ -z "$1" ]; then
+        ui_print "$0 <busybox>"
+        abort
+    fi
+    
+    busybox_path="$1"
+    ui_print "Busybox at $1"
+    files="$MODPATH/service.sh $clash_data_dir/clash.internal.config"
+    
+    for file in $files; do
+        if [ -f "$file" ]; then
+            ui_print "Replacing in $file"
+            sed -i "s|busybox_path=\"replace\"|busybox_path=\"$busybox_path\"|g" "$file"
+        fi
+    done
 }
 
 
@@ -96,4 +137,6 @@ check_env
 check_lastinstall
 release_file
 move_config
+setup_busybox
+config_compatible
 setup_perm

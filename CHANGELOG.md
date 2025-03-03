@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.4.0
+- 尝试支持 KSU/Apatch
+- 分离 clash.config 适合修改和不适合修改的逻辑
 ## 1.3.2
 - 添加 `action.sh`，现在可以在 magisk 里面点开 webui
 ## 1.3.1
