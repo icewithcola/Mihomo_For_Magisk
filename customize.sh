@@ -105,12 +105,16 @@ setup_busybox(){
     if [ "${KSU}" ]; then
         ui_print "Setting up for KSU..."
         setup_busybox_internal "/data/adb/ksu/bin/busybox" 
+        sed -i "s|KSU|KSU✅|g" "$MODPATH/module.prop"
     elif [ "${APATCH}" ]; then
         ui_print "Setting up for Apatch..."
         setup_busybox_internal "/data/adb/ap/bin/busybox" 
+        sed -i "s|APatch|APatch✅|g" "$MODPATH/module.prop"
+
     else
         ui_print "Setting up for Magisk or unknown environment..."
         setup_busybox_internal "/data/adb/magisk/busybox" 
+        sed -i "s|Magisk/|Magisk✅/|g" "$MODPATH/module.prop"
     fi
 }
 

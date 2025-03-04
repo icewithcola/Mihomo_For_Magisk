@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.4.1
+- internal: 可以合并的时候保留 dns (clash.internal.config -> keep_dns)
+- 模块列表可以看到模块检测到的环境类型
 ## 1.4.0
 - 尝试支持 KSU/Apatch
 - 分离 clash.config 适合修改和不适合修改的逻辑
