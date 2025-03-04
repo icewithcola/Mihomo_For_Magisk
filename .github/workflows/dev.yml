@@ -52,7 +52,7 @@ jobs:
           VERSION=$(cat ./version | awk -F 'v' '{print $2}')
           OUT_DIR="release/"
           export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
-          export caption=$(echo -e "New Dev Release of arm64:v${VERSION}\nCommit Message:\n ${{ github.event.head_commit.message }} \n USE WITH CAUTION!\n开发版本，小心使用！" | jq -Rsr @uri )
+          export caption=$(echo -e "New Dev Release of arm64\nmihomo=${VERSION}\nCommit SHA=${{ github.sha }}\nCommit Message:\n${{ github.event.head_commit.message }}\nUSE WITH CAUTION!\n开发版本，小心使用！" | jq -Rsr @uri )
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
