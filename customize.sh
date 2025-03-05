@@ -73,6 +73,11 @@ move_config(){
         cp -f ${clash_data_dir}.old/clash.config ${clash_data_dir}/clash.config
         cp -f ${clash_data_dir}.old/proxy_providers/* ${clash_data_dir}/proxy_providers/
         cp -f ${clash_data_dir}.old/rule_providers/* ${clash_data_dir}/rule_providers/
+
+        if grep -q '^#keep' ${clash_data_dir}.old/template; then
+            cp -f ${clash_data_dir}.old/template ${clash_data_dir}/template
+            echo "保留 template"
+        fi
     fi
 }
 

@@ -1,4 +1,9 @@
 # CHANGELOG
+## 1.4.2
+- 合并 dns 修复
+- 现在 template 没有 dns 就会自动从 config.yaml 加
+- template 加上 '#keep' 即可在更新保留
+- 快看看新 README
 ## 1.4.1
 - internal: 可以合并的时候保留 dns (clash.internal.config -> keep_dns)
 - 模块列表可以看到模块检测到的环境类型

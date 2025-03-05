@@ -75,9 +75,8 @@ start_clash() {
     fi
     
     # 合并文件逻辑
-    if [ "${keep_dns}" == "true" ]; then
-        sed 's/dns:.*$//' ${template_file} >> ${temporary_config_file}.swp
-        echo "\n" >> ${temporary_config_file}.swp
+    if [ "${keep_dns}" == "true" && [ grep -q "^dns:$" ${template_file} ] ]; then
+        awk '/dns:/ {exit} {print $0}' ${template_file} >> ${temporary_config_file}.swp
         sed -n -E '/^dns:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
     else # 从 proxies 开始
         cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
