@@ -40,7 +40,7 @@ Mihomo For Magisk 是一个简单的 Mihomo 通过 Magisk/KSU/Apatch 运行的�
 当且仅当自用时才填上您的订阅链接，**否则您的订阅也会被打包**，分发这样的打包可能会造成您的订阅泄漏
 ### clash/template
 此处是您的模板，在文件首部添加 `#keep` 以防止升级时修改  
-如果`template` 没有 `dns` 块，或者 `clash.internal.config` 设置了 `keep_dns=true` （升级不会保留），会从 `config.yaml` 的 `dns` 开始合并  
+如果`template` 没有 `dns` 块，会从 `config.yaml` 的 `dns` 开始合并  
 否则config时会从`config.yaml`的`proxy:`行开始合并，故请将其他需要合并的部分放在`proxy`下方  
 最终合并结果是
 ```

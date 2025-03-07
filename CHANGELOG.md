@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.4.2-1
+- clash.internal.config -> keep_dns 弃用
+- 不使用此功能没有必要更新
 ## 1.4.2
 - 合并 dns 修复
 - 现在 template 没有 dns 就会自动从 config.yaml 加
