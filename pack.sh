@@ -128,6 +128,16 @@ download_dashboard(){
 
 
 pack(){
+    # 检查ELF
+    if ! file ./binary/clash | grep -q "ELF"; then
+        echo "Error: binary/clash 不是有效的ELF文件"
+        exit 1
+    fi
+    if ! file ./binary/curl | grep -q "ELF"; then
+        echo "Error: binary/curl 不是有效的ELF文件"
+        exit 1
+    fi
+
     # 给module.prop加入版本号
     version=$(cat ./version | awk -F 'v' '{print $2}')
     sed -i "s/mihomo版本:.*/mihomo版本: $version/" ./module.prop
