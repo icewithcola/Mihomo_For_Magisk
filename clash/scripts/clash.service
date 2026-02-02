@@ -176,19 +176,21 @@ kill_clash() {
 }
 
 
-while getopts ":skc" signal ; do
-    case ${signal} in
-        c)
-            clean_last
-            ;;
-        s)
-            start_clash
-            ;;
-        k)
-            stop_clash
-            ;;
-        ?)
-            echo ""
-            ;;
-    esac
-done
+if [ "${scripts##*/}" = "clash.service" ]; then
+    while getopts ":skc" signal ; do
+        case ${signal} in
+            c)
+                clean_last
+                ;;
+            s)
+                start_clash
+                ;;
+            k)
+                stop_clash
+                ;;
+            ?)
+                echo ""
+                ;;
+        esac
+    done
+fi
