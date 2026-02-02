@@ -1,4 +1,8 @@
 # CHANGELOG
+## 1.4.3
+- 解决 "getopts: arguments changed since last call"
+- 更新内核
+- curl: 8.6.0 -> 8.18.0
 ## 1.4.2-1
 - clash.internal.config -> keep_dns 弃用
 - 不使用此功能没有必要更新
