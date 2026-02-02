@@ -39,8 +39,14 @@ download_binaries(){
     rm -f mihomo.gz
 
     # curl
-    echo "正在下载curl..."
-    wget -q --show-progress "${curl_link}/${curl_version}/curl-linux-${pack_arch}-musl-${curl_version}.tar.xz" -O curl.tar.xz 
+    if [ "$pack_arch" == "arm64" ]; then
+        curl_arch="aarch64"
+    elif [ "$pack_arch" == "amd64" ]; then
+        curl_arch="x86_64"
+    fi
+    curl_url="${curl_link}/${curl_version}/curl-linux-${curl_arch}-musl-${curl_version}.tar.xz"
+    echo "正在下载curl: ${curl_url}"
+    wget -q --show-progress "${curl_url}" -O curl.tar.xz 
     tar -xvf curl.tar.xz
     mv curl ./binary/curl
     chmod 0755 ./binary/curl
@@ -51,10 +57,21 @@ download_binaries(){
 
 
     #修改customize.sh
-    if [ "$pack_arch" == "amd64" ]; then
-        sed -i "s/target_arch=.*/target_arch=\"x64\"/" ./customize.sh
+    # 检测操作系统类型，使用正确的sed命令语法
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS系统
+        if [ "$pack_arch" == "amd64" ]; then
+            sed -i '' "s/target_arch=.*/target_arch=\"x64\"/" ./customize.sh
+        else
+            sed -i '' "s/target_arch=.*/target_arch=\"$pack_arch\"/" ./customize.sh
+        fi
     else
-        sed -i "s/target_arch=.*/target_arch=\"$pack_arch\"/" ./customize.sh
+        # Linux和其他系统
+        if [ "$pack_arch" == "amd64" ]; then
+            sed -i "s/target_arch=.*/target_arch=\"x64\"/" ./customize.sh
+        else
+            sed -i "s/target_arch=.*/target_arch=\"$pack_arch\"/" ./customize.sh
+        fi
     fi
 
 }
