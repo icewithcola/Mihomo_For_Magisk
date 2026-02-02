@@ -40,7 +40,7 @@ download_binaries(){
 
     # curl
     echo "正在下载curl..."
-    wget -q --show-progress "${curl_link}/${curl_version}/curl-linux-${pack_arch}-${curl_version}.tar.xz" -O curl.tar.xz 
+    wget -q --show-progress "${curl_link}/${curl_version}/curl-linux-${pack_arch}-musl-${curl_version}.tar.xz" -O curl.tar.xz 
     tar -xvf curl.tar.xz
     mv curl ./binary/curl
     chmod 0755 ./binary/curl

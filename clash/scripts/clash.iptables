@@ -195,7 +195,7 @@ apply_rules() {
     create_nat_output_dns
     create_nat_output_filter
 
-    creat_pre_divert
+    create_pre_divert
     ${iptables_wait} -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
     ${iptables_wait} -t mangle -A PREROUTING -p udp -m socket -j DIVERT
 
@@ -316,6 +316,7 @@ set_tun(){
     while [ "$(ip -4 route show table ${table_id} 2> /dev/null)" == "" ]
     do
         ip -4 route add default dev ${tun_device} table ${table_id}
+        sleep 0.5
     done
     ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
 	${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
@@ -351,6 +352,7 @@ set_tun(){
         while [ "$(ip -6 route show table ${table_id} 2> /dev/null)" == "" ]
         do
             ip -6 route add default dev ${tun_device} table ${table_id}
+            sleep 0.5
         done
         ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
         ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
@@ -380,7 +382,6 @@ set_tun(){
         ${ip6tables_wait} -t mangle -I PREROUTING -j CLASH_PRE
     else
         echo 1 > /proc/sys/net/ipv6/conf/${tun_device}/disable_ipv6
-        echo dr
         ${ip6tables_wait} -t mangle -I OUTPUT -j DROP
     fi
 }
