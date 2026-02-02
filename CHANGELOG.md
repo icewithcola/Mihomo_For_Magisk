@@ -3,6 +3,7 @@
 - 解决 "getopts: arguments changed since last call"
 - 更新内核
 - curl: 8.6.0 -> 8.18.0
+- iptables: 修复一些 typo
 - 打包：添加检查等
 ## 1.4.2-1
 - clash.internal.config -> keep_dns 弃用

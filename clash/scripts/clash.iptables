@@ -167,7 +167,7 @@ create_nat_prerouting_filter() {
     fi
 }
 
-creat_pre_divert() {
+create_pre_divert() {
     ${iptables_wait} -t mangle -N DIVERT
 
     ${iptables_wait} -t mangle -A DIVERT -j MARK --set-mark ${mark_id}
