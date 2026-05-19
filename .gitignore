@@ -9,3 +9,4 @@ clash/proxy_providers
 clash/rule_providers
 version
 *.gz
+tests/*

@@ -94,6 +94,9 @@ start_clash() {
         log_error "配置文件合并失败."
     fi
 
+    # 应用 rewrite.yaml（如果存在且非空）
+    ${scripts_dir}/clash.rewrite -a ${temporary_config_file}
+
     if [ -f "${Clash_bin_path}" ] ; then
         mkdir -p ${Clash_run_path}
         chown ${Clash_user_group} ${Clash_bin_path}
@@ -145,11 +148,13 @@ start_clash() {
             log_error "clash 启动失败 — 配置错误，详细信息:"
             ${Clash_bin_path} -d ${Clash_data_dir} -f ${Clash_config_file} -t \
                 | grep error | awk -F 'msg=' '{print $2}' >> ${CFM_logs_file}
+            ${scripts_dir}/clash.rewrite -d
             kill_clash
             exit 1
         fi
     else
         log_error "缺少 ${temporary_config_file} 或 ${Clash_GeoIP_file}, 无法启动."
+        ${scripts_dir}/clash.rewrite -d
         exit 1
     fi
 

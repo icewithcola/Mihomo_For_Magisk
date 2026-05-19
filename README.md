@@ -62,6 +62,60 @@ template 中的内容 ...
 config.yaml proxy:/dns: 这一行以下的内容 ...
 ```
 
+### ✏️ clash/rewrite.yaml
+模块默认会附带一个 **空** 的 `rewrite.yaml`
+内核启动前，已合并的 `template + config.yaml` 会按 `rewrite.yaml` 的规则做一次 in-place 改写。
+默认空文件 = 不做任何处理，安装后用户按需要填写。升级时如果你已经动过它（文件非空），会自动迁移到新的安装。
+
+🔹 **语法**：
+```yaml
+rule-name:
+  add-after: <regex>      # 与 add-before 二选一
+  add-before: <regex>     # 与 add-after 二选一
+  insert-content: '<single-line content>'
+```
+规则锚点有两种，二选一：
+- `add-after`: 在 **第一个匹配行之后** 插入一行 `<insert-content>`。
+- `add-before`: 在 **第一个匹配行之前** 插入一行 `<insert-content>`。
+- 同时设置 `add-after` 和 `add-before`，或两者都不设置：该规则会被跳过并记 warning。
+- `insert-content` **必须用单引号 `'...'` 包裹**，引号会被剥掉，剩下内容**原样插入**（包括用户自己写的前导空格）。引擎不再做缩进推断，需要什么样的对齐就在引号里写什么样。
+- `insert-content` 必须是单行字符串，不能换行，如果有多行内容需求，可以使用 json 字符串，或者自己写 `\n`
+
+🔹 **示例**：
+```yaml
+add-secret:
+  add-after: ^external-controller:
+  insert-content: 'secret: my-secret-token'
+
+inject-fake-ip-filter:
+  add-after: ^  fake-ip-filter:
+  insert-content: '    - "*.custom.com"'
+
+prepend-rule:
+  add-before: ^  - MATCH,Proxy$
+  insert-content: '  - DOMAIN-SUFFIX,example.com,Proxy'
+```
+对应输出（注意 `insert-content` 引号里写多少前导空格，输出就有多少）：
+```yaml
+external-controller: 127.0.0.1:9090
+secret: my-secret-token
+...
+  fake-ip-filter:
+    - "*.custom.com"
+    - "*.lan"
+
+rules:
+  - DOMAIN-SUFFIX,example.com,Proxy
+  - MATCH,Proxy
+```
+
+🔹 **行为**：
+- 引擎按 `<insert-content>` 字面值逐字插入，不做任何缩进规范化或推断；写出来什么就插什么。
+- `insert-content` 没有用 `'...'` 包裹 → 当前规则被跳过，`run.logs` 中会出现 `[warn][rewrite] rewrite 规则 [name] insert-content 必须使用单引号包裹 ... 已跳过.` 提示。
+- `add-after` / `add-before` 找不到任何匹配行 → 当前规则被跳过，`run.logs` 中会出现 `[warn][rewrite] rewrite 规则 [name] 未匹配 ... 规则为空.` 提示。
+- 内核因为改写后的配置启动失败时，会把改写前 / 改写后的 unified diff 写到 `run.logs` 里（"rewrite 改动片段"），方便定位是哪条规则导致内核启动失败。
+- `rewrite.yaml` 留空（默认）= 完全不处理，启动行为和以前一样。
+
 ### 📝 日志
 所有运行时脚本统一使用 `clash/scripts/clash.log` 作为 logger，日志格式：
 ```

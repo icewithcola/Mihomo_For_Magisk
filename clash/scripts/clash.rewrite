@@ -1,0 +1,200 @@
+#!/system/bin/sh
+# clash.rewrite — apply rewrite.yaml rules to a target config file.
+#
+# rewrite.yaml syntax (single-line per rule):
+#   rule-name:
+#     add-after: <regex>      # optional, mutually exclusive with add-before
+#     add-before: <regex>     # optional, mutually exclusive with add-after
+#     insert-content: '<single-line content>'
+#
+# Behavior:
+#   * insert-content MUST be wrapped in single quotes; the wrapping quotes
+#     are stripped, the rest is inserted verbatim with NO indent changes.
+#     If quotes are missing, the rule is rejected with a warning.
+#   * add-after:  inserts on the line immediately AFTER  the first match.
+#   * add-before: inserts on the line immediately BEFORE the first match.
+#   * exactly one of add-before / add-after must be set; otherwise the rule
+#     is skipped with a warning.
+#   * if the anchor regex doesn't match anywhere, the rule is skipped and a
+#     warning is written to ${CFM_logs_file} ("规则为空").
+#   * empty rewrite.yaml = silent no-op.
+#
+# Usage:
+#   clash.rewrite -a <target>   apply rewrites to <target> (in place)
+#   clash.rewrite -d            print before/after diff to logs (after failure)
+
+scripts=$(realpath $0)
+scripts_dir=$(dirname ${scripts})
+. /data/clash/clash.config
+LOG_TAG="rewrite"
+. ${scripts_dir}/clash.log
+
+apply_rewrites() {
+    target="$1"
+
+    if [ -z "${target}" ] || [ ! -f "${target}" ]; then
+        log_error "rewrite 目标文件不存在: ${target}"
+        return 1
+    fi
+
+    if [ ! -f "${rewrite_file}" ] || [ ! -s "${rewrite_file}" ]; then
+        # File missing or empty — silent no-op (default ship state).
+        return 0
+    fi
+
+    if ! grep -qE '^[A-Za-z_]' "${rewrite_file}"; then
+        # Only blank lines / comments — nothing to apply.
+        return 0
+    fi
+
+    mkdir -p "${Clash_run_path}"
+
+    # Save pre-rewrite snapshot for the post-failure diff dump.
+    cp -f "${target}" "${rewrite_diff_before}"
+
+    rules_tmp="${Clash_run_path}/rewrite.rules"
+    rm -f "${rules_tmp}"
+
+    # Parse rewrite.yaml into separator-delimited records:
+    #   <name><SEP><before_re><SEP><after_re><SEP><insert_valid><SEP><insert>
+    # Use a non-whitespace separator so empty fields are preserved by shell read.
+    # insert-content MUST be wrapped in single quotes; insert_valid is "1"
+    # when properly quoted, "0" otherwise (rule will be rejected later).
+    awk '
+    BEGIN { sep = sprintf("%c", 31) }
+    function flush() {
+        if (name == "") return
+        printf "%s%s%s%s%s%s%s%s%s\n", name, sep, before_re, sep, after_re, sep, insert_valid, sep, insert
+        name=""; before_re=""; after_re=""; insert=""; insert_valid="0"
+    }
+    /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]*$/ {
+        flush()
+        name=$0; sub(/:[ \t]*$/, "", name)
+        next
+    }
+    /^[ \t]+add-before:[ \t]*/ {
+        line=$0; sub(/^[ \t]+add-before:[ \t]*/, "", line)
+        before_re=line
+        next
+    }
+    /^[ \t]+add-after:[ \t]*/ {
+        line=$0; sub(/^[ \t]+add-after:[ \t]*/, "", line)
+        after_re=line
+        next
+    }
+    /^[ \t]+insert-content:[ \t]*/ {
+        line=$0; sub(/^[ \t]+insert-content:[ \t]*/, "", line)
+        if (line ~ /^'\''.*'\''$/) {
+            sub(/^'\''/, "", line)
+            sub(/'\''$/, "", line)
+            insert=line
+            insert_valid="1"
+        } else {
+            insert=line
+            insert_valid="0"
+        }
+        next
+    }
+    END { flush() }
+    ' "${rewrite_file}" > "${rules_tmp}"
+
+    rule_count=0
+    applied_count=0
+    SEP=$(printf '\037')
+
+    while IFS="${SEP}" read -r name before_re after_re insert_valid insert; do
+        [ -n "${name}" ] || continue
+        rule_count=$((rule_count + 1))
+
+        if [ -z "${before_re}" ] && [ -z "${after_re}" ]; then
+            log_warn "rewrite 规则 [${name}] 缺少 add-before/add-after, 已跳过 (规则为空)."
+            continue
+        fi
+
+        if [ -n "${before_re}" ] && [ -n "${after_re}" ]; then
+            log_warn "rewrite 规则 [${name}] 同时设置 add-before 和 add-after, 已跳过."
+            continue
+        fi
+
+        if [ "${insert_valid}" != "1" ]; then
+            log_warn "rewrite 规则 [${name}] insert-content 必须使用单引号包裹 ('...'), 已跳过."
+            continue
+        fi
+
+        if [ -n "${before_re}" ]; then
+            mode="before"
+            anchor_re="${before_re}"
+            anchor_key="add-before"
+        else
+            mode="after"
+            anchor_re="${after_re}"
+            anchor_key="add-after"
+        fi
+
+        awk -v mode="${mode}" -v anchor_re="${anchor_re}" -v insert="${insert}" '
+        BEGIN { matched = 0 }
+        {
+            if (!matched && $0 ~ anchor_re) {
+                if (mode == "before") {
+                    print insert
+                    print $0
+                } else {
+                    print $0
+                    print insert
+                }
+                matched = 1
+                next
+            }
+            print
+        }
+        END { exit (matched ? 0 : 1) }
+        ' "${target}" > "${target}.rwswp"
+
+        rc=$?
+        if [ "${rc}" = "0" ]; then
+            mv -f "${target}.rwswp" "${target}"
+            applied_count=$((applied_count + 1))
+            log_info "rewrite 规则 [${name}] 已应用 (${anchor_key})."
+        else
+            rm -f "${target}.rwswp"
+            log_warn "rewrite 规则 [${name}] 未匹配 (${anchor_key} 找不到), 规则为空."
+        fi
+    done < "${rules_tmp}"
+
+    rm -f "${rules_tmp}"
+
+    if [ "${rule_count}" = "0" ]; then
+        log_info "rewrite.yaml 中没有可用规则, 跳过."
+    else
+        log_say "rewrite 共 ${rule_count} 条, ${applied_count} 条已应用."
+    fi
+
+    cp -f "${target}" "${rewrite_diff_after}"
+    return 0
+}
+
+show_diff() {
+    if [ ! -f "${rewrite_diff_before}" ] || [ ! -f "${rewrite_diff_after}" ]; then
+        return
+    fi
+    if cmp -s "${rewrite_diff_before}" "${rewrite_diff_after}"; then
+        return
+    fi
+
+    log_say "rewrite 改动片段写入 run.logs (--- before / +++ after):"
+    diff -u "${rewrite_diff_before}" "${rewrite_diff_after}" >>${CFM_logs_file} 2>&1
+}
+
+while getopts ":a:d" signal; do
+    case ${signal} in
+    a)
+        apply_rewrites "${OPTARG}"
+        ;;
+    d)
+        show_diff
+        ;;
+    ?)
+        echo ""
+        ;;
+    esac
+done

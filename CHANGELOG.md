@@ -1,4 +1,7 @@
 # CHANGELOG
+## 1.5.0
+- 添加重写 config.yaml 功能，详见 README 查看具体的 rewrite 语法
+- 统一日志格式
 ## 1.4.3
 - 解决 "getopts: arguments changed since last call"
 - 更新内核

@@ -78,6 +78,12 @@ move_config(){
             cp -f ${clash_data_dir}.old/template ${clash_data_dir}/template
             echo "保留 template"
         fi
+
+        # 用户改过 rewrite.yaml 才迁移（默认是空文件）
+        if [ -s "${clash_data_dir}.old/rewrite.yaml" ]; then
+            cp -f ${clash_data_dir}.old/rewrite.yaml ${clash_data_dir}/rewrite.yaml
+            echo "保留 rewrite.yaml"
+        fi
     fi
 }
 
@@ -92,6 +98,12 @@ config_compatible(){ # 所有兼容性修改都在这里
 
 setup_perm(){
     ui_print "- 开始设置环境权限."
+
+    # rewrite.yaml: 默认空文件 — 如果迁移时没拿到, 这里补一个空的
+    if [ ! -f "${clash_data_dir}/rewrite.yaml" ]; then
+        touch ${clash_data_dir}/rewrite.yaml
+    fi
+
     set_perm_recursive ${MODPATH} 0 0 0755 0644
     set_perm  ${MODPATH}/system/bin/setcap  0  0  0755
     set_perm  ${MODPATH}/system/bin/getcap  0  0  0755
@@ -103,6 +115,7 @@ setup_perm(){
     set_perm  ${MODPATH}/system/bin/clash  ${system_uid}  ${system_gid}  6755
     set_perm  ${clash_data_dir}/clash.config ${system_uid} ${system_gid} 0755
     set_perm  ${clash_data_dir}/clash.internal.config ${system_uid} ${system_gid} 0755
+    set_perm  ${clash_data_dir}/rewrite.yaml ${system_uid} ${system_gid} 0644
     set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0644
 }
 
