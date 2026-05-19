@@ -3,6 +3,8 @@
 scripts=$(realpath $0)
 scripts_dir=$(dirname ${scripts})
 . /data/clash/clash.config
+LOG_TAG="tool"
+. ${scripts_dir}/clash.log
 
 monitor_local_ipv4() {
 
@@ -71,9 +73,9 @@ restart_clash() {
     sleep 5
     ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
     if [ "$?" == "0" ]; then
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 内核成功重启." >>${CFM_logs_file}
+        log_say "内核成功重启."
     else
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"err: 内核重启失败." >>${CFM_logs_file}
+        log_error "内核重启失败."
     fi
 }
 
@@ -107,10 +109,10 @@ updateFile() {
     if [ -f "${file}" ]; then
         rm -rf ${file_bk}
 
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: ${file}更新成功." >>${CFM_logs_file}
+        log_say "${file} 更新成功."
     else
         mv ${file_bk} ${file}
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"war: ${file}更新失败,文件已恢复.." >>${CFM_logs_file}
+        log_warn "${file} 更新失败, 文件已恢复."
         return 1
     fi
 }
@@ -120,7 +122,7 @@ find_packages_uid() {
     hd=""
     for package in $(cat ${filter_packages_file}); do
         if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"war: Tproxy_fake-ip下禁用黑白名单." >>${CFM_logs_file}
+            log_warn "Tproxy_fake-ip 下禁用黑白名单."
             return
         fi
         nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
@@ -130,14 +132,14 @@ find_packages_uid() {
         fi
         uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
         if [ "${uid}" == "" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"warn: ${package}未找到." >>${CFM_logs_file}
+            log_warn "${package} 未找到."
             continue
         fi
         echo "${hd}${uid}" >> ${appuid_file}.tmp
         if [ "${mode}" = "blacklist" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: ${hd}${package}已过滤." >>${CFM_logs_file}
+            log_info "${hd}${package} 已过滤."
         elif [ "${mode}" = "whitelist" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: ${hd}${package}已代理." >>${CFM_logs_file}
+            log_info "${hd}${package} 已代理."
         fi
     done
     rm -f ${appuid_file}
@@ -158,15 +160,15 @@ port_detection() {
     fi
 
     if ! (echo ${clash_port} | grep ${Clash_tproxy_port}); then
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"err: tproxy端口未启动." >>${CFM_logs_file}
+        log_error "tproxy 端口未启动."
         exit 1
     fi
 
     if ! (echo ${clash_port} | grep ${Clash_dns_port}); then
-        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"err: dns端口未启动." >>${CFM_logs_file}
+        log_error "dns 端口未启动."
         exit 1
     fi
-    echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: tproxy和dns端口已启动." >>${CFM_logs_file}
+    log_info "tproxy 和 dns 端口已启动."
     exit 0
 }
 
@@ -200,7 +202,7 @@ limit_clash() {
     if [ "${Cgroup_memory_path}" == "" ]; then
         Cgroup_memory_path=$(mount | grep cgroup | awk '/memory/{print $3}' | head -1)
         if [ "${Cgroup_memory_path}" == "" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"err: 自动获取Cgroup_memory_path失败." >>${CFM_logs_file}
+            log_error "自动获取 Cgroup_memory_path 失败."
             return
         fi
     fi
@@ -209,7 +211,7 @@ limit_clash() {
     echo $(cat ${Clash_pid_file}) >"${Cgroup_memory_path}/clash/cgroup.procs"
     echo "${Cgroup_memory_limit}" >"${Cgroup_memory_path}/clash/memory.limit_in_bytes"
 
-    echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 限制内存: ${Cgroup_memory_limit}." >>${CFM_logs_file}
+    log_say "限制内存: ${Cgroup_memory_limit}."
 }
 
 update_cofig() {
@@ -223,10 +225,10 @@ update_cofig() {
     secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
     if [ -z ${secret}]; then
         curl -s -X PUT 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
-    else        
+    else
         curl -s -X PUT -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
     fi
-    echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 订阅更新成功." >>${CFM_logs_file}
+    log_say "订阅更新成功."
 }
 
 while getopts ":kfmpusl" signal; do

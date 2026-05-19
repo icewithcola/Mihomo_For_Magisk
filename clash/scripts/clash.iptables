@@ -3,6 +3,8 @@
 scripts=`realpath $0`
 scripts_dir=`dirname ${scripts}`
 . /data/clash/clash.config
+LOG_TAG="iptables"
+. ${scripts_dir}/clash.log
 
 create_rule_rules() {
     ip -4 rule add fwmark ${mark_id} table ${table_id} pref ${pref_id}
@@ -25,13 +27,13 @@ flush_rule_rules() {
 create_mangle_prerouting_chain() {
     ${iptables_wait} -t mangle -N CLASH_PRE
 
-    ${iptables_wait} -t mangle -A CLASH_PRE -p tcp -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} && echo "" || echo "你的系统可能阉割了Tproxy-TCP" >> ${CFM_logs_file}
-    ${iptables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} && echo "" || echo "你的系统可能阉割了Tproxy-UDP" >> ${CFM_logs_file}
+    ${iptables_wait} -t mangle -A CLASH_PRE -p tcp -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} || log_warn "你的系统可能阉割了 Tproxy-TCP."
+    ${iptables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} || log_warn "你的系统可能阉割了 Tproxy-UDP."
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N CLASH_PRE
 
-        ${ip6tables_wait} -t mangle -A CLASH_PRE -p tcp -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} && echo "" || echo "你的系统可能阉割了Tproxy-TCP6" >> ${CFM_logs_file}
-        ${ip6tables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} && echo "" || echo "你的系统可能阉割了Tproxy-UDP6" >> ${CFM_logs_file} 
+        ${ip6tables_wait} -t mangle -A CLASH_PRE -p tcp -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} || log_warn "你的系统可能阉割了 Tproxy-TCP6."
+        ${ip6tables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port} --tproxy-mark ${mark_id} || log_warn "你的系统可能阉割了 Tproxy-UDP6."
     fi
 }
 
@@ -424,7 +426,7 @@ while getopts ":sk" signal ; do
         s)
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 if [ "${Clash_tun_status}" == "true" ]; then
-                    echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use Tun." >> ${CFM_logs_file}
+                    log_info "use Tun."
                     if [ "${Clash_auto_route}" == "true" ]; then
                         ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
                         ${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
@@ -435,10 +437,10 @@ while getopts ":sk" signal ; do
                         set_tun
                     fi
                 else
-                    echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use tproxy." >> ${CFM_logs_file}
+                    log_info "use tproxy."
                     create_rule_rules && apply_rules
                 fi
-                echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: iptables规则已应用." >> ${CFM_logs_file}
+                log_say "iptables 规则已应用."
             else
                 exit 0
             fi
@@ -447,7 +449,7 @@ while getopts ":sk" signal ; do
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 del_tun
                 flush_rule_rules && flush_rules
-                echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: iptables规则已清空." >> ${CFM_logs_file}
+                log_say "iptables 规则已清空."
             else
                 exit 0
             fi

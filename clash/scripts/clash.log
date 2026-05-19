@@ -1,0 +1,34 @@
+#!/system/bin/sh
+# clash.log — small logging helper, sourced by other scripts.
+#
+# Usage:
+#   . /data/clash/scripts/clash.log     # also sources clash.config implicitly? NO — caller does that
+#   LOG_TAG="service"                   # set component name; defaults to "clash"
+#   log_info  "routine event"           # → file only
+#   log_warn  "user should know"        # → file + stdout
+#   log_error "user must know"          # → file + stdout
+#   log_say   "key milestone"           # → file + stdout (info level, but mirrored)
+#
+# Format: [HH:MM:SS][LEVEL][TAG] message
+#
+# Requires: ${CFM_logs_file} (set by clash.internal.config). Falls back to
+# /dev/null if unset, so callers can't accidentally crash on a missing var.
+
+LOG_TAG="${LOG_TAG:-clash}"
+
+log_set_tag() { LOG_TAG="$1"; }
+
+_log_now() { TZ=Asia/Shanghai date "+%H:%M:%S"; }
+
+_log_write() {
+    # $1=level (info|warn|error)  $2=mirror_to_stdout (0|1)  $3..=msg
+    _lvl="$1"; _mirror="$2"; shift 2
+    _line="[$(_log_now)][${_lvl}][${LOG_TAG}] $*"
+    [ "${_mirror}" = "1" ] && printf '%s\n' "${_line}"
+    printf '%s\n' "${_line}" >> "${CFM_logs_file:-/dev/null}"
+}
+
+log_info()  { _log_write info  0 "$@"; }
+log_warn()  { _log_write warn  1 "$@"; }
+log_error() { _log_write error 1 "$@"; }
+log_say()   { _log_write info  1 "$@"; }

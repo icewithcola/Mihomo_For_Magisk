@@ -62,6 +62,16 @@ template 中的内容 ...
 config.yaml proxy:/dns: 这一行以下的内容 ...
 ```
 
+### 📝 日志
+所有运行时脚本统一使用 `clash/scripts/clash.log` 作为 logger，日志格式：
+```
+[HH:MM:SS][LEVEL][TAG] message
+```
+- `LEVEL` ∈ `info` / `warn` / `error`；`TAG` 是组件名（`service` / `tool` / `rewrite` / `sub` / `iptables`）。
+- `info` 级 = 仅写入 `run.logs`；`warn` / `error` 以及关键里程碑级 `info`（内核启动 / 订阅更新成功 / rewrite 应用统计 等）= 同时输出到 `stdout`。
+- 手动运行 `clash.service -s` / `clash.tool -s` 时，终端能直接看到关键事件；过去这些只写文件、用户看不到。
+- 用 `grep '\[rewrite\]' /data/clash/run/run.logs` 可以按组件过滤。
+
 ## ⚡️ 操作指南
 ### ✅ 启动 Mihomo
 ```sh
