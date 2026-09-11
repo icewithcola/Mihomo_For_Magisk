@@ -30,6 +30,46 @@ clean_last(){
 
 }
 
+configure_ipv6() {
+    # Keep the original settings outside run/, which clean_last rotates.
+    local state_dir="${Clash_data_dir}/ipv6-state"
+    local net iface accept_ra disable_ipv6
+    mkdir -p "${state_dir}" || return 1
+    for net in /proc/sys/net/ipv6/conf/wlan* /proc/sys/net/ipv6/conf/*data* ; do
+        [ -d "${net}" ] || continue
+        iface=${net##*/}
+        if [ ! -f "${state_dir}/${iface}" ]; then
+            accept_ra=$(cat "${net}/accept_ra") || continue
+            disable_ipv6=$(cat "${net}/disable_ipv6") || continue
+            printf '%s %s\n' "${accept_ra}" "${disable_ipv6}" > "${state_dir}/${iface}" || continue
+        fi
+        if [ "${ipv6}" = "false" ]; then
+            case ${iface} in wlan*) echo 0 > "${net}/accept_ra" ;; esac
+            echo 1 > "${net}/disable_ipv6"
+        else
+            # Preserve Android's RA policy, including accept_ra=2.
+            echo 0 > "${net}/disable_ipv6"
+        fi
+    done
+}
+
+restore_ipv6() {
+    local state_dir="${Clash_data_dir}/ipv6-state"
+    local state net accept_ra disable_ipv6
+    for state in "${state_dir}"/* ; do
+        [ -f "${state}" ] || continue
+        net="/proc/sys/net/ipv6/conf/${state##*/}"
+        if [ -d "${net}" ]; then
+            read -r accept_ra disable_ipv6 < "${state}" || continue
+            # Restore RA before enabling IPv6 so address discovery can resume.
+            echo "${accept_ra}" > "${net}/accept_ra" || continue
+            echo "${disable_ipv6}" > "${net}/disable_ipv6" || continue
+        fi
+        rm -f "${state}"
+    done
+    [ ! -d "${state_dir}" ] || rmdir "${state_dir}"
+}
+
 start_clash() {
     clean_last
     if [ -n "$app_proxy" ] ; then
@@ -37,28 +77,6 @@ start_clash() {
     fi
     if [ -n "$app_direct" ] ; then
         get_uid "$app_direct" "${Clash_data_dir}/rule_providers/${direct_file}"
-    fi
-    if [ "${ipv6}" = "false" ] ; then
-        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            # AVD中可能不存在data
-            if [ -d ${net} ] ; then
-                echo ${net} | grep -q wlan
-                if [ $? -eq 0 ] ; then
-                    echo 0 > ${net}/accept_ra
-                fi
-                echo 1 > ${net}/disable_ipv6
-            fi
-        done
-    else
-        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            if [ -d ${net} ] ; then
-                echo ${net} | grep -q wlan
-                if [ $? -eq 0 ] ; then
-                    echo 1 > ${net}/accept_ra
-                fi
-                echo 0 > ${net}/disable_ipv6
-            fi
-        done
     fi
     echo "" > ${CFM_logs_file}
     pid=`cat ${Clash_pid_file} 2> /dev/null`
@@ -147,6 +165,7 @@ start_clash() {
         exit 1
     fi
 
+    configure_ipv6
     ${scripts_dir}/clash.iptables -s
     return # 去掉端口检查
 
@@ -164,6 +183,7 @@ start_clash() {
 
 stop_clash() {
     ${scripts_dir}/clash.iptables -k
+    restore_ipv6
     kill_clash
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" | tee -a ${CFM_logs_file}
 }

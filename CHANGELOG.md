@@ -1,4 +1,8 @@
 # CHANGELOG
+## 1.4.4
+- 修复执行 `clash.service -k` 后 IPv6 无法解析的问题
+- 停止服务时恢复原有 IPv6 设置，保留 Android 的路由通告策略
+- 路由清理失败时仍清理 DNS 和防火墙规则
 ## 1.4.3
 - 解决 "getopts: arguments changed since last call"
 - 更新内核

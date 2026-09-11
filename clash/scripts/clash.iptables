@@ -446,7 +446,9 @@ while getopts ":sk" signal ; do
         k)
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 del_tun
-                flush_rule_rules && flush_rules
+                # Missing routes must not prevent removal of DNS/firewall rules.
+                flush_rule_rules
+                flush_rules
                 echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: iptables规则已清空." >> ${CFM_logs_file}
             else
                 exit 0
