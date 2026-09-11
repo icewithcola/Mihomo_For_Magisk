@@ -51,11 +51,26 @@ jobs:
           CHANNEL: ${{ secrets.CHANNEL }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
-          VERSION=$(cat ./version | awk -F 'v' '{print $2}')
+          VERSION=$(cut -d : -f 2- ./version)
+          MODULE_VERSION=$(sed -n 's/^version=//p' ./module.prop)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_SUBJECT=$(git log -1 --format=%s | cut -c 1-200)
           OUT_DIR="release/"
-          export arm64=$(find $OUT_DIR -name "MFM-arm64-v*.zip")
-          export caption=$(echo -e "New Release of arm64\nmihomo=${VERSION}\nCommit SHA=${{ github.sha }}\nCommit Message:\n ${{ github.event.head_commit.message }}" | jq -Rsr @uri )
-          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+          arm64=$(find "$OUT_DIR" -name "MFM-arm64-v*.zip")
+          caption=$(printf '%s\n' \
+            "📦 Mihomo For Magisk — Official Release / 正式版" \
+            "" \
+            "Release channel / 正式发布渠道" \
+            "" \
+            "Module / 模块: ${MODULE_VERSION}" \
+            "Mihomo / 内核: ${VERSION}" \
+            "Architecture / 架构: ARM64" \
+            "Branch / 分支: ${GITHUB_REF_NAME}" \
+            "Commit / 提交: ${COMMIT_SHA}" \
+            "${COMMIT_SUBJECT}" \
+            "" \
+            "#MFM #Release #ARM64" | jq -Rsr @uri)
+          if [ -n "$BOT_TOKEN" ]; then
             curl -s -X POST \
                   -H "Content-Type:multipart/form-data"\
                   -F document=@"$arm64" \
