@@ -213,18 +213,43 @@ limit_clash() {
 }
 
 update_cofig() {
-    # Updat config.yaml
-    # 1. generate new `config.yaml` and run directory
-    . $(dirname $0)/clash.service
-    start_clash
-    # 2. restart with api 
-    # See https://wiki.metacubex.one/api/
-    controller_api=$(grep 'external-controller:' $(dirname $0)/../template | cut -d' ' -f2)
-    secret=$(grep 'secret:' $(dirname $0)/../template | cut -d' ' -f2)
-    if [ -z ${secret}]; then
-        curl -s -X PUT 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
-    else        
-        curl -s -X PUT -H 'Authorization: Bearer '${secret}'' 'http://'${controller_api}'/configs?force=true' -d '{"path": "", "payload": ""}'
+    . "${scripts_dir}/clash.service"
+    local controller_api secret http_status
+    if clash_running; then
+        # Contact the current controller even if the new template changes it.
+        controller_api=$(sed -n 's/^external-controller: *//p' "${temporary_config_file}" | tr -d '\r' | sed 's/^"\(.*\)"$/\1/; s/^'"'"'\(.*\)'"'"'$/\1/')
+        secret=$(sed -n 's/^secret: *//p' "${temporary_config_file}" | tr -d '\r' | sed 's/^"\(.*\)"$/\1/; s/^'"'"'\(.*\)'"'"'$/\1/')
+        if [ -z "${controller_api}" ]; then
+            echo "err: 未配置 external-controller，无法重载配置." >> "${CFM_logs_file}"
+            return 1
+        fi
+        cp -f "${temporary_config_file}" "${temporary_config_file}.reload.bak" || return 1
+        if ! generate_config; then
+            rm -f "${temporary_config_file}.reload.bak"
+            return 1
+        fi
+        set -- --silent --show-error --fail --connect-timeout 5 --max-time 60 \
+            -o /dev/null -w '%{http_code}' -X PUT -H 'Content-Type: application/json'
+        if [ -n "${secret}" ]; then
+            set -- "$@" -H "Authorization: Bearer ${secret}"
+        fi
+        if ! http_status=$(curl "$@" "http://${controller_api}/configs?force=true" \
+            -d "{\"path\":\"${temporary_config_file}\"}" 2>> "${CFM_logs_file}"); then
+            mv -f "${temporary_config_file}.reload.bak" "${temporary_config_file}"
+            echo "err: 配置重载失败，现有内核仍在运行." >> "${CFM_logs_file}"
+            return 1
+        fi
+        case "${http_status}" in
+            2??) ;;
+            *)
+                mv -f "${temporary_config_file}.reload.bak" "${temporary_config_file}"
+                echo "err: 配置重载失败，HTTP ${http_status}." >> "${CFM_logs_file}"
+                return 1
+                ;;
+        esac
+        rm -f "${temporary_config_file}.reload.bak"
+    else
+        start_clash || return 1
     fi
     echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: 订阅更新成功." >>${CFM_logs_file}
 }
@@ -236,8 +261,8 @@ while getopts ":kfmpusl" signal; do
         ;;
     s)
         . $(dirname $0)/updateSub.sh
-        updateSub
-        update_cofig
+        updateSub && update_cofig
+        exit $?
         ;;
     k)
         if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ]; then

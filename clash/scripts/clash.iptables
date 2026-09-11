@@ -4,6 +4,12 @@ scripts=`realpath $0`
 scripts_dir=`dirname ${scripts}`
 . /data/clash/clash.config
 
+# Probe IPv6 NAT on this device instead of relying on an unset variable.
+nat_kernel="false"
+if [ "${ipv6}" = "true" ] && ${ip6tables_wait} -t nat -L OUTPUT >/dev/null 2>&1; then
+    nat_kernel="true"
+fi
+
 create_rule_rules() {
     ip -4 rule add fwmark ${mark_id} table ${table_id} pref ${pref_id}
     ip -4 route add local default dev lo table ${table_id}
@@ -224,7 +230,8 @@ apply_rules() {
             ${ip6tables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
             ${ip6tables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
         else
-            ${ip6tables_wait} -I OUTPUT -p udp --dport 53 -j DROP
+            # Match the core exemption used by FILTER_OUT_DNS.
+            ${ip6tables_wait} -I OUTPUT -p udp --dport 53 -m owner ! --gid-owner ${Clash_group} -j DROP
         fi
     fi
 
@@ -281,9 +288,10 @@ flush_rules() {
             ${ip6tables_wait} -t nat -X FILTER_PRE_DNS
             ${ip6tables_wait} -t nat -F DNS_PRE
             ${ip6tables_wait} -t nat -X DNS_PRE
-        else
-            ${ip6tables_wait} -D OUTPUT -p udp --dport 53 -j DROP
         fi
+        # Also remove rules installed by older versions, or before NAT was available.
+        ${ip6tables_wait} -D OUTPUT -p udp --dport 53 -m owner ! --gid-owner ${Clash_group} -j DROP 2>/dev/null
+        ${ip6tables_wait} -D OUTPUT -p udp --dport 53 -j DROP 2>/dev/null
 
         ${ip6tables_wait} -t mangle -D OUTPUT -j FILTER_OUT_CLASH
         ${ip6tables_wait} -t mangle -D PREROUTING -j FILTER_PRE_CLASH
