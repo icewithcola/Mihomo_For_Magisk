@@ -86,6 +86,16 @@ config.yaml proxy:/dns: 这一行以下的内容 ...
 
 🔹 **默认仅允许本机访问**，如需远程访问，请修改 `template` 并添加 `#keep`，建议同时设置 `secret` 以增强安全性。
 
+### Wi-Fi / 移动网络切换
+
+TPROXY 模式会自动维护本机 IPv4 `/32` 和 IPv6 `/128` 地址的绕过规则，避免切换网络后 UDP 回包被再次代理。无需开启旧的 `filter_local` 选项。监听地址变化的同时每 5 秒核对一次；更新时先添加新地址，再删除旧地址，不清空正在使用的规则链。手动核对可运行：
+
+```sh
+/data/clash/scripts/clash.tool -m
+```
+
+该机制不依赖部分 Android 内核缺失的 `addrtype` 扩展。地址变化到规则更新之间仍有短暂的用户态处理延迟；它不解决代理节点或上游 DNS 的故障。
+
 ## 🔗 相关链接
 - [Mihomo 官方仓库](https://github.com/MetaCubeX/mihomo)
 - [Magisk 官方仓库](https://github.com/topjohnwu/Magisk)

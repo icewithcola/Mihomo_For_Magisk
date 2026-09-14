@@ -32,6 +32,10 @@ check_env(){
 check_lastinstall(){
     # 检测是否已经安装过
     if [ -d "${clash_data_dir}" ]; then
+        if [ -x "${clash_data_dir}/scripts/clash.network" ]; then
+            "${clash_data_dir}/scripts/clash.network" -k \
+                || abort "无法停止网络监听，取消安装"
+        fi
         ui_print "检测到已安装过的Clash,将您的配置文件迁移到新的目录."
         if [ -d "${clash_data_dir}.old" ]; then
             rm -rf "${clash_data_dir}.old"

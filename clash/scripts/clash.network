@@ -1,0 +1,166 @@
+#!/system/bin/sh
+
+# TPROXY must not intercept replies to the phone's own UDP sockets. Keep
+# host addresses, not interface subnets: cellular addresses can change while
+# Wi-Fi remains connected, and some kernels have no xt_addrtype support.
+network_init() {
+    network_dir="${Clash_data_dir}/network"
+    network_pid="${network_dir}/watch.pid"
+    mkdir -p "${network_dir}" || return 1
+}
+
+network_sync_family() {
+    local family="$1" command="$2" prefix="$3"
+    local addresses wanted rules current installed address normalized
+    # Do not remove working exclusions if the address dump fails.
+    addresses=$(ip -o "-${family}" address show) || return 1
+    wanted=$(printf '%s\n' "${addresses}" | awk -v prefix="${prefix}" '
+        $3 == "inet" || $3 == "inet6" {
+            sub(/\/.*/, "", $4); print $4 "/" prefix
+        }' | sort -u)
+    rules=$(${command} -w 3 -t mangle -S FILTER_LOCAL_IP) || return 1
+    current=$(printf '%s\n' "${rules}" | awk '
+        NF == 6 && $1 == "-A" && $2 == "FILTER_LOCAL_IP" &&
+        $3 == "-d" && $5 == "-j" && $6 == "ACCEPT" {print $4}')
+    installed=$(printf '%s\n' "${current}" | awk -v prefix="${prefix}" '
+        NF {if (index($0, "/") == 0) print $0 "/" prefix; else print}' | sort -u)
+    [ "${wanted}" != "${installed}" ] || return 0
+
+    # Add every new host before deleting anything, including legacy /64 rules.
+    # A failed add leaves the old exclusions intact for the next retry.
+    for address in ${wanted}; do
+        if ! ${command} -w 3 -t mangle -C FILTER_LOCAL_IP -d "${address}" -j ACCEPT 2>/dev/null; then
+            ${command} -w 3 -t mangle -I FILTER_LOCAL_IP -d "${address}" -j ACCEPT || return 1
+        fi
+    done
+    for address in ${current}; do
+        normalized=${address}
+        case "${normalized}" in */*) ;; *) normalized="${normalized}/${prefix}" ;; esac
+        if ! printf '%s\n' "${wanted}" | grep -Fxq "${normalized}"; then
+            ${command} -w 3 -t mangle -D FILTER_LOCAL_IP -d "${address}" -j ACCEPT || return 1
+        fi
+    done
+}
+
+network_sync() {
+    local result=0
+    # Share the lock with manual clash.tool -m calls. Keep it outside run/,
+    # which the service rotates. No background process may inherit this FD.
+    exec 6>"${network_dir}/sync.lock" || return 1
+    "${busybox_path}" flock -x 6 || { exec 6>&-; return 1; }
+    if [ -f "${network_dir}/stopped" ]; then
+        result=1
+    else
+        network_sync_family 4 iptables 32 || result=1
+        if [ "${ipv6}" = "true" ]; then
+            network_sync_family 6 ip6tables 128 || result=1
+        fi
+    fi
+    "${busybox_path}" flock -u 6
+    exec 6>&-
+    return "${result}"
+}
+
+network_process() {
+    case "$1" in ''|*[!0-9]*) return 1 ;; esac
+    [ -r "/proc/$1/cmdline" ] || return 1
+    tr '\000' '\n' < "/proc/$1/cmdline" | grep -Fxq "${Clash_data_dir}/scripts/clash.network" || return 1
+    tr '\000' '\n' < "/proc/$1/cmdline" | grep -Fxq -- '--watch'
+}
+
+network_stop() {
+    local pid attempt=0
+    # Prevent a queued/manual sync from writing after firewall teardown starts.
+    : > "${network_dir}/stopped" || return 1
+    pid=$(cat "${network_pid}" 2>/dev/null)
+    if network_process "${pid}"; then
+        kill -TERM "${pid}" || return 1
+        while network_process "${pid}"; do
+            [ "${attempt}" -lt 100 ] || return 1
+            sleep 0.1
+            attempt=$((attempt + 1))
+        done
+    fi
+    exec 6>"${network_dir}/sync.lock" || return 1
+    "${busybox_path}" flock -x 6 || { exec 6>&-; return 1; }
+    "${busybox_path}" flock -u 6
+    exec 6>&-
+    rm -f "${network_pid}" "${network_dir}/ready"
+}
+
+network_watch_cleanup() {
+    if [ -n "${monitor_pid}" ]; then
+        kill "${monitor_pid}" 2>/dev/null
+        wait "${monitor_pid}" 2>/dev/null
+    fi
+    exec 7>&-
+    rm -f "${network_fifo}"
+    if [ "$(cat "${network_pid}" 2>/dev/null)" = "$$" ]; then
+        rm -f "${network_pid}" "${network_dir}/ready"
+    fi
+}
+
+network_watch() {
+    local monitor_pid="" network_fifo="${network_dir}/events.$$" event failed=0
+    exec 8>"${network_dir}/watch.lock" || return 1
+    "${busybox_path}" flock -n 8 || return 1
+    echo "$$" > "${network_pid}"
+    trap network_watch_cleanup EXIT
+    trap 'exit 0' HUP INT TERM
+    mkfifo "${network_fifo}" || return 1
+    exec 7<>"${network_fifo}" || return 1
+    while :; do
+        if [ -z "${monitor_pid}" ] || ! kill -0 "${monitor_pid}" 2>/dev/null; then
+            [ -z "${monitor_pid}" ] || wait "${monitor_pid}" 2>/dev/null
+            # Bound the lifetime of an orphaned monitor after SIGKILL. A
+            # periodic snapshot also covers unsupported/lost netlink events.
+            "${busybox_path}" timeout 60 ip monitor address > "${network_fifo}" 2>/dev/null 5>&- 6>&- 7>&- 8>&- 9>&- &
+            monitor_pid=$!
+        fi
+        if network_sync; then
+            : > "${network_dir}/ready"
+            failed=0
+        else
+            if [ "${failed}" = 0 ]; then
+                echo "warn: local address bypass update failed; retrying." >&2
+            fi
+            failed=1
+        fi
+        # Android mksh supports timed reads. React to both IPv4 and IPv6
+        # address events; rescan at least every five seconds even without one.
+        IFS= read -r -t 5 event <&7 || :
+    done
+}
+
+network_start() {
+    local pid attempt=0
+    network_stop || return 1
+    rm -f "${network_dir}/stopped" || return 1
+    # Close inherited lifecycle locks, especially clash.service's FD 9.
+    nohup "${Clash_data_dir}/scripts/clash.network" --watch >> "${CFM_logs_file}" 2>&1 5>&- 6>&- 8>&- 9>&- &
+    pid=$!
+    while [ ! -f "${network_dir}/ready" ]; do
+        if ! kill -0 "${pid}" 2>/dev/null || [ "${attempt}" -ge 100 ]; then
+            network_stop
+            echo "err: local address bypass initialization failed." >&2
+            return 1
+        fi
+        sleep 0.1
+        attempt=$((attempt + 1))
+    done
+}
+
+if [ "${0##*/}" = "clash.network" ]; then
+    . /data/clash/clash.config
+    network_init || exit 1
+    case "$1" in
+        --watch) network_watch ;;
+        -m) network_sync ;;
+        -s|-k)
+            exec 5>"${network_dir}/control.lock" || exit 1
+            "${busybox_path}" flock -x 5 || exit 1
+            if [ "$1" = -s ]; then network_start; else network_stop; fi
+            ;;
+        *) echo "Usage: $0 -s|-k|-m" >&2; exit 1 ;;
+    esac
+fi

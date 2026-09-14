@@ -189,6 +189,15 @@ create_pre_divert() {
 }
 
 apply_rules() {
+    ${iptables_wait} -t mangle -N FILTER_LOCAL_IP 2>/dev/null ||
+        ${iptables_wait} -t mangle -S FILTER_LOCAL_IP >/dev/null || return 1
+    if [ "${ipv6}" = "true" ]; then
+        ${ip6tables_wait} -t mangle -N FILTER_LOCAL_IP 2>/dev/null ||
+            ${ip6tables_wait} -t mangle -S FILTER_LOCAL_IP >/dev/null || return 1
+    fi
+    # Populate both families and start watching before attaching interception.
+    "${scripts_dir}/clash.network" -s || return 1
+
     create_mangle_prerouting_chain
     create_mangle_prerouting_filter
 
@@ -205,7 +214,6 @@ apply_rules() {
     ${iptables_wait} -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
     ${iptables_wait} -t mangle -A PREROUTING -p udp -m socket -j DIVERT
 
-    ${iptables_wait} -t mangle -N FILTER_LOCAL_IP
     ${iptables_wait} -t mangle -A PREROUTING -j FILTER_LOCAL_IP
     ${iptables_wait} -t mangle -A OUTPUT -j FILTER_LOCAL_IP
 
@@ -219,7 +227,6 @@ apply_rules() {
         ${ip6tables_wait} -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
         ${ip6tables_wait} -t mangle -A PREROUTING -p udp -m socket -j DIVERT
 
-        ${ip6tables_wait} -t mangle -N FILTER_LOCAL_IP
         ${ip6tables_wait} -t mangle -A PREROUTING -j FILTER_LOCAL_IP
         ${ip6tables_wait} -t mangle -A OUTPUT -j FILTER_LOCAL_IP
 
@@ -235,7 +242,6 @@ apply_rules() {
         fi
     fi
 
-    ${scripts_dir}/clash.tool -m
 }
 
 flush_rules() {
@@ -430,6 +436,7 @@ del_tun(){
 while getopts ":sk" signal ; do
     case ${signal} in
         s)
+            "${scripts_dir}/clash.network" -k || exit 1
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 if [ "${Clash_tun_status}" == "true" ]; then
                     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use Tun." >> ${CFM_logs_file}
@@ -444,7 +451,7 @@ while getopts ":sk" signal ; do
                     fi
                 else
                     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use tproxy." >> ${CFM_logs_file}
-                    create_rule_rules && apply_rules
+                    create_rule_rules && apply_rules || exit 1
                 fi
                 echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: iptables规则已应用." >> ${CFM_logs_file}
             else
@@ -452,6 +459,8 @@ while getopts ":sk" signal ; do
             fi
             ;;
         k)
+            # Stop before deleting chains so an update cannot race teardown.
+            "${scripts_dir}/clash.network" -k || exit 1
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 del_tun
                 # Missing routes must not prevent removal of DNS/firewall rules.

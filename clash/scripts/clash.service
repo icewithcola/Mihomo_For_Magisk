@@ -16,6 +16,9 @@ get_uid(){
 }
 
 clean_last(){
+    if [ -x "${scripts_dir}/clash.network" ]; then
+        "${scripts_dir}/clash.network" -k || return 1
+    fi
     if [ -d ${Clash_run_path} ] ; then
         rm -rf ${Clash_run_path}.old
         mv -f ${Clash_run_path} ${Clash_run_path}.old
@@ -100,10 +103,13 @@ generate_config() {
 start_clash() {
     # Check before clean_last rotates the live PID, config and logs.
     if clash_running; then
+        if [ "${Clash_tun_status}" != "true" ] && { [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ]; }; then
+            "${scripts_dir}/clash.network" -s || return 1
+        fi
         echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 检测到clash已启动,此次不启动." >> "${CFM_logs_file}"
         return 0
     fi
-    clean_last
+    clean_last || return 1
     if [ -n "$app_proxy" ] ; then
         get_uid "$app_proxy" "${Clash_data_dir}/rule_providers/${proxy_file}"
     fi
@@ -149,10 +155,6 @@ start_clash() {
         fi
 
         sed -i '/^[  ]*$/d' ${CFM_logs_file}
-        if [ "${filter_local}" = "true" ] ; then
-            com="${scripts_dir}/clash.tool -m ; sleep 10 ;${scripts_dir}/clash.tool -m ; sleep 10; ${scripts_dir}/clash.tool -m ;sleep 10; ${scripts_dir}/clash.tool -m;sleep 10;${scripts_dir}/clash.tool -m ; sleep 10;${scripts_dir}/clash.tool -m"
-            echo "*/1 * * * * ${com}" >> ${Clash_run_path}/root && echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 自动绕过本地ip段已打开." >> ${CFM_logs_file}
-        fi
     else
         echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"err: clash内核丢失." >> ${CFM_logs_file}
         exit 1
@@ -198,7 +200,7 @@ start_clash() {
 }
 
 stop_clash() {
-    ${scripts_dir}/clash.iptables -k
+    ${scripts_dir}/clash.iptables -k || return 1
     restore_ipv6
     kill_clash
     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: 停止clash内核.\n" | tee -a ${CFM_logs_file}

@@ -4,68 +4,6 @@ scripts=$(realpath $0)
 scripts_dir=$(dirname ${scripts})
 . /data/clash/clash.config
 
-monitor_local_ipv4() {
-
-    change=false
-
-    wifistatus=$(dumpsys connectivity | grep "WIFI" | grep "state:" | awk -F ", " '{print $2}' | awk -F "=" '{print $2}' 2>&1)
-
-    if [ ! -z "${wifistatus}" ]; then
-        if test ! "${wifistatus}" = "$(cat ${Clash_run_path}/lastwifi)"; then
-            change=true
-            echo "${wifistatus}" >${Clash_run_path}/lastwifi
-        elif [ "$(ip route get 1.2.3.4 | awk '{print $5}' 2>&1)" != "wlan0" ]; then
-            change=true
-            echo "${wifistatus}" >${Clash_run_path}/lastwifi
-        fi
-    else
-        echo "" >${Clash_run_path}/lastwifi
-    fi
-
-    if [ "$(settings get global mobile_data 2>&1)" -eq 1 ] || [ "$(settings get global mobile_data1 2>&1)" -eq 1 ]; then
-        if [ ! "${mobilestatus}" = "$(cat ${Clash_run_path}/lastmobile)" ]; then
-            change=true
-            echo "${mobilestatus}" >${Clash_run_path}/lastmobile
-        fi
-    fi
-
-    if [ ${change} == true ]; then
-
-        local_ipv4=$(ip a | awk '$1~/inet$/{print $2}')
-        local_ipv6=$(ip -6 a | awk '$1~/inet6$/{print $2}')
-        rules_ipv4=$(${iptables_wait} -t mangle -nvL FILTER_LOCAL_IP | grep "ACCEPT" | awk '{print $9}' 2>&1)
-        rules_ipv6=$(${ip6tables_wait} -t mangle -nvL FILTER_LOCAL_IP | grep "ACCEPT" | awk '{print $8}' 2>&1)
-
-        for rules_subnet in ${rules_ipv4[*]}; do
-            ${iptables_wait} -t mangle -D FILTER_LOCAL_IP -d ${rules_subnet} -j ACCEPT
-        done
-
-        for subnet in ${local_ipv4[*]}; do
-            if ! (${iptables_wait} -t mangle -C FILTER_LOCAL_IP -d ${subnet} -j ACCEPT >/dev/null 2>&1); then
-                ${iptables_wait} -t mangle -I FILTER_LOCAL_IP -d ${subnet} -j ACCEPT
-            fi
-        done
-
-        for rules_subnet6 in ${rules_ipv6[*]}; do
-            ${ip6tables_wait} -t mangle -D FILTER_LOCAL_IP -d ${rules_subnet6} -j ACCEPT
-        done
-
-        for subnet6 in ${local_ipv6[*]}; do
-            if ! (${ip6tables_wait} -t mangle -C FILTER_LOCAL_IP -d ${subnet6} -j ACCEPT >/dev/null 2>&1); then
-                ${ip6tables_wait} -t mangle -I FILTER_LOCAL_IP -d ${subnet6} -j ACCEPT
-            fi
-        done
-    fi
-
-    unset local_ipv4
-    unset rules_ipv4
-    unset local_ipv6
-    unset rules_ipv6
-    unset wifistatus
-    unset mobilestatus
-    unset change
-}
-
 restart_clash() {
     ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
     sleep 5
@@ -275,11 +213,8 @@ while getopts ":kfmpusl" signal; do
         find_packages_uid
         ;;
     m)
-        if [ "${mode}" = "blacklist" ] && [ -f "${Clash_pid_file}" ]; then
-            monitor_local_ipv4
-        else
-            exit 0
-        fi
+        "${scripts_dir}/clash.network" -m
+        exit $?
         ;;
     p)
         port_detection
