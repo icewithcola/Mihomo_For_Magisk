@@ -19,6 +19,13 @@ create_rule_rules() {
     fi
 }
 
+tproxy_family_applied() {
+    "$@" -t mangle -C PREROUTING -j FILTER_LOCAL_IP &&
+        "$@" -t mangle -C OUTPUT -j FILTER_LOCAL_IP &&
+        "$@" -t mangle -C PREROUTING -j FILTER_PRE_CLASH &&
+        "$@" -t mangle -C OUTPUT -j FILTER_OUT_CLASH
+}
+
 flush_rule_rules() {
     ip rule del fwmark ${mark_id} table ${table_id}
     ip route flush table ${table_id}
@@ -436,9 +443,9 @@ del_tun(){
 while getopts ":sk" signal ; do
     case ${signal} in
         s)
-            "${scripts_dir}/clash.network" -k || exit 1
             if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] ; then
                 if [ "${Clash_tun_status}" == "true" ]; then
+                    "${scripts_dir}/clash.network" -k || exit 1
                     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use Tun." >> ${CFM_logs_file}
                     if [ "${Clash_auto_route}" == "true" ]; then
                         ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
@@ -451,10 +458,18 @@ while getopts ":sk" signal ; do
                     fi
                 else
                     echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: use tproxy." >> ${CFM_logs_file}
-                    create_rule_rules && apply_rules || exit 1
+                    # Repeated starts must keep address refresh alive and avoid
+                    # adding duplicate policy routes or interception hooks.
+                    if tproxy_family_applied ${iptables_wait} &&
+                        { [ "${ipv6}" != "true" ] || tproxy_family_applied ${ip6tables_wait}; }; then
+                        "${scripts_dir}/clash.network" -s || exit 1
+                    else
+                        create_rule_rules && apply_rules || exit 1
+                    fi
                 fi
                 echo [`TZ=Asia/Shanghai date "+%H:%M:%S"`]"info: iptables规则已应用." >> ${CFM_logs_file}
             else
+                "${scripts_dir}/clash.network" -k || exit 1
                 exit 0
             fi
             ;;
