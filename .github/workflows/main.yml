@@ -54,7 +54,14 @@ jobs:
           VERSION=$(cut -d : -f 2- ./version)
           MODULE_VERSION=$(sed -n 's/^version=//p' ./module.prop)
           COMMIT_SHA=$(git rev-parse --short HEAD)
-          COMMIT_SUBJECT=$(git log -1 --format=%s | cut -c 1-200)
+          RELEASE_NOTES=$(awk -v version="${MODULE_VERSION#v}" '
+            $1 == "##" { if (found) exit; found = ($2 == version); next }
+            found { print }
+          ' ./CHANGELOG.md)
+          if [ -z "$RELEASE_NOTES" ]; then
+            echo "::error::No changelog entries found for ${MODULE_VERSION}"
+            exit 1
+          fi
           OUT_DIR="release/"
           arm64=$(find "$OUT_DIR" -name "MFM-arm64-v*.zip")
           caption=$(printf '%s\n' \
@@ -67,7 +74,9 @@ jobs:
             "Architecture / 架构: ARM64" \
             "Branch / 分支: ${GITHUB_REF_NAME}" \
             "Commit / 提交: ${COMMIT_SHA}" \
-            "${COMMIT_SUBJECT}" \
+            "" \
+            "Changelog / 更新内容:" \
+            "${RELEASE_NOTES}" \
             "" \
             "#MFM #Release #ARM64" | jq -Rsr @uri)
           if [ -n "$BOT_TOKEN" ]; then
