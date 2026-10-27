@@ -47,7 +47,8 @@ network_sync() {
     # Share the lock with manual clash.tool -m calls. Keep it outside run/,
     # which the service rotates. No background process may inherit this FD.
     exec 6>"${network_dir}/sync.lock" || return 1
-    "${busybox_path}" flock -x 6 || { exec 6>&-; return 1; }
+    # mksh closes exec-opened FDs in child commands unless explicitly passed.
+    "${busybox_path}" flock -x 6 6>&6 || { exec 6>&-; return 1; }
     if [ -f "${network_dir}/stopped" ]; then
         result=1
     else
@@ -56,7 +57,7 @@ network_sync() {
             network_sync_family 6 ip6tables 128 || result=1
         fi
     fi
-    "${busybox_path}" flock -u 6
+    "${busybox_path}" flock -u 6 6>&6
     exec 6>&-
     return "${result}"
 }
@@ -82,8 +83,8 @@ network_stop() {
         done
     fi
     exec 6>"${network_dir}/sync.lock" || return 1
-    "${busybox_path}" flock -x 6 || { exec 6>&-; return 1; }
-    "${busybox_path}" flock -u 6
+    "${busybox_path}" flock -x 6 6>&6 || { exec 6>&-; return 1; }
+    "${busybox_path}" flock -u 6 6>&6
     exec 6>&-
     rm -f "${network_pid}" "${network_dir}/ready"
 }
@@ -103,7 +104,7 @@ network_watch_cleanup() {
 network_watch() {
     local monitor_pid="" network_fifo="${network_dir}/events.$$" event failed=0
     exec 8>"${network_dir}/watch.lock" || return 1
-    "${busybox_path}" flock -n 8 || return 1
+    "${busybox_path}" flock -n 8 8>&8 || return 1
     echo "$$" > "${network_pid}"
     trap network_watch_cleanup EXIT
     trap 'exit 0' HUP INT TERM
@@ -158,7 +159,7 @@ if [ "${0##*/}" = "clash.network" ]; then
         -m) network_sync ;;
         -s|-k)
             exec 5>"${network_dir}/control.lock" || exit 1
-            "${busybox_path}" flock -x 5 || exit 1
+            "${busybox_path}" flock -x 5 5>&5 || exit 1
             if [ "$1" = -s ]; then network_start; else network_stop; fi
             ;;
         *) echo "Usage: $0 -s|-k|-m" >&2; exit 1 ;;

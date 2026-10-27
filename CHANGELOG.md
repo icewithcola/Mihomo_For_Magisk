@@ -1,5 +1,6 @@
 # CHANGELOG
 ## 1.4.6
+- 修复 Android mksh 下 flock 报 Bad file descriptor，导致本机地址监听与刷新无法启动的问题
 - 修复通过命令行重启后，本地 ipv6 没有刷新
 - 修复本地 ip bypass 的问题
 ## 1.4.5
