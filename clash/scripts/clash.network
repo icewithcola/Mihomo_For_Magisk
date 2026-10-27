@@ -129,7 +129,9 @@ network_watch() {
         fi
         # Android mksh supports timed reads. React to both IPv4 and IPv6
         # address events; rescan at least every five seconds even without one.
-        IFS= read -r -t 5 event <&7 || :
+        # Child exit signals can interrupt mksh's select; the next iteration
+        # checks/restarts the monitor and resynchronizes addresses.
+        IFS= read -r -t 5 event <&7 2>/dev/null || :
     done
 }
 
@@ -138,7 +140,7 @@ network_start() {
     network_stop || return 1
     rm -f "${network_dir}/stopped" || return 1
     # Close inherited lifecycle locks, especially clash.service's FD 9.
-    nohup "${Clash_data_dir}/scripts/clash.network" --watch >> "${CFM_logs_file}" 2>&1 5>&- 6>&- 8>&- 9>&- &
+    nohup "${busybox_path}" setsid "${Clash_data_dir}/scripts/clash.network" --watch < /dev/null >> "${CFM_logs_file}" 2>&1 5>&- 6>&- 8>&- 9>&- &
     pid=$!
     while [ ! -f "${network_dir}/ready" ]; do
         if ! kill -0 "${pid}" 2>/dev/null || [ "${attempt}" -ge 100 ]; then

@@ -54,13 +54,15 @@ updateFile() {
 }
 
 find_packages_uid() {
-    rm -f ${appuid_file}.tmp
+    # An empty/unmatched package list must still produce an empty UID file.
+    : > "${appuid_file}.tmp" || return 1
+    if [ "${Clash_enhanced_mode}" = "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
+        echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"war: Tproxy_fake-ip下禁用黑白名单." >>${CFM_logs_file}
+        mv -f "${appuid_file}.tmp" "${appuid_file}"
+        return $?
+    fi
     hd=""
     for package in $(cat ${filter_packages_file}); do
-        if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-            echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"war: Tproxy_fake-ip下禁用黑白名单." >>${CFM_logs_file}
-            return
-        fi
         nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
         if [ "${nhd}" != "" ]; then
             hd=${nhd}
@@ -78,11 +80,10 @@ find_packages_uid() {
             echo [$(TZ=Asia/Shanghai date "+%H:%M:%S")]"info: ${hd}${package}已代理." >>${CFM_logs_file}
         fi
     done
-    rm -f ${appuid_file}
-    for uid in $(cat ${appuid_file}.tmp | sort -u); do
-        echo ${uid} >> ${appuid_file}
-    done
-    rm -f ${appuid_file}.tmp
+    # Publish only after sorting succeeds, keeping the previous list on failure.
+    sort -u "${appuid_file}.tmp" > "${appuid_file}.sorted" &&
+        mv -f "${appuid_file}.sorted" "${appuid_file}" || return 1
+    rm -f "${appuid_file}.tmp"
 }
 
 port_detection() {

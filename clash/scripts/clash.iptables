@@ -20,10 +20,10 @@ create_rule_rules() {
 }
 
 tproxy_family_applied() {
-    "$@" -t mangle -C PREROUTING -j FILTER_LOCAL_IP &&
-        "$@" -t mangle -C OUTPUT -j FILTER_LOCAL_IP &&
-        "$@" -t mangle -C PREROUTING -j FILTER_PRE_CLASH &&
-        "$@" -t mangle -C OUTPUT -j FILTER_OUT_CLASH
+    "$@" -t mangle -C PREROUTING -j FILTER_LOCAL_IP 2>/dev/null &&
+        "$@" -t mangle -C OUTPUT -j FILTER_LOCAL_IP 2>/dev/null &&
+        "$@" -t mangle -C PREROUTING -j FILTER_PRE_CLASH 2>/dev/null &&
+        "$@" -t mangle -C OUTPUT -j FILTER_OUT_CLASH 2>/dev/null
 }
 
 flush_rule_rules() {

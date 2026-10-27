@@ -1,4 +1,10 @@
 # CHANGELOG
+## 1.4.7
+- 首次启动时静默检查尚未创建的 FILTER_LOCAL_IP 链
+- 修复空应用名单或包名全部未匹配时 appuid.list 及临时文件缺失的问题
+- Tproxy fake-ip 禁用应用名单时清除旧 UID，避免沿用旧规则
+- 内核和网络监听器使用独立会话运行并关闭终端输入，处理启动命令不退出的问题
+- 处理网络监听器等待事件被信号打断时的 read 报错
 ## 1.4.6
 - 修复 Android mksh 下 flock 报 Bad file descriptor，导致本机地址监听与刷新无法启动的问题
 - 修复通过命令行重启后，本地 ipv6 没有刷新
